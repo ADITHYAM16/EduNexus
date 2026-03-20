@@ -10,6 +10,9 @@ interface CollegeContextType {
   addStudent: (deptId: string, yearId: string, sectionId: string, student: Omit<Student, "id" | "marks">) => void;
   updateStudentMark: (deptId: string, yearId: string, sectionId: string, studentId: string, subjectId: string, mark: number) => void;
   getStaffAssignments: (staffId: string) => { dept: Department; year: AcademicYear; section: Section; subject: Subject }[];
+  deleteSection: (deptId: string, yearId: string, sectionId: string) => void;
+  renameDepartment: (deptId: string, name: string) => void;
+  deleteDepartment: (deptId: string) => void;
 }
 
 const CollegeContext = createContext<CollegeContextType | null>(null);
@@ -105,8 +108,26 @@ export const CollegeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return results;
   }, [departments]);
 
+  const deleteSection = useCallback((deptId: string, yearId: string, sectionId: string) => {
+    setDepartments(prev => prev.map(d => d.id !== deptId ? d : {
+      ...d,
+      years: d.years.map(y => y.id !== yearId ? y : {
+        ...y,
+        sections: y.sections.filter(s => s.id !== sectionId),
+      }),
+    }));
+  }, []);
+
+  const renameDepartment = useCallback((deptId: string, name: string) => {
+    setDepartments(prev => prev.map(d => d.id !== deptId ? d : { ...d, name }));
+  }, []);
+
+  const deleteDepartment = useCallback((deptId: string) => {
+    setDepartments(prev => prev.filter(d => d.id !== deptId));
+  }, []);
+
   return (
-    <CollegeContext.Provider value={{ departments, addDepartment, addSection, addSubject, addYear, addStudent, updateStudentMark, getStaffAssignments }}>
+    <CollegeContext.Provider value={{ departments, addDepartment, addSection, addSubject, addYear, addStudent, updateStudentMark, getStaffAssignments, deleteSection, renameDepartment, deleteDepartment }}>
       {children}
     </CollegeContext.Provider>
   );

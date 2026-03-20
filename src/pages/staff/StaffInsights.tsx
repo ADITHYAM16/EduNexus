@@ -1,11 +1,16 @@
 import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import InsightCard from "@/components/InsightCard";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCollege } from "@/contexts/CollegeContext";
 import { getAIInsights } from "@/data/mockData";
-import { Brain, Plus, Trash2, Check } from "lucide-react";
+import { Brain, Plus, Trash2, Check, Users, BookOpen, TrendingUp, AlertTriangle, Lightbulb, Target, Clock, Award } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface Todo {
   id: number;
@@ -13,8 +18,29 @@ interface Todo {
   done: boolean;
 }
 
+interface StudentRiskPrediction {
+  studentName: string;
+  rollNo: string;
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  predictedGrade: number;
+  passLikelihood: number;
+  issues: string[];
+  recommendations: string[];
+}
+
+interface TeachingInsight {
+  metric: string;
+  value: number;
+  trend: 'UP' | 'DOWN' | 'STABLE';
+  suggestion: string;
+}
+
 const StaffInsights: React.FC = () => {
+  const { user } = useAuth();
+  const { getStaffAssignments } = useCollege();
+  const assignments = getStaffAssignments(user?.id || "");
   const insights = getAIInsights(88, 72);
+  
   const [todos, setTodos] = useState<Todo[]>([
     { id: 1, text: "Complete Unit 3 lab report", done: false },
     { id: 2, text: "Prepare quiz for next week", done: false },
@@ -22,6 +48,58 @@ const StaffInsights: React.FC = () => {
   ]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newTask, setNewTask] = useState("");
+
+  // Mock AI-generated data for teacher insights
+  const studentRiskPredictions: StudentRiskPrediction[] = [
+    {
+      studentName: "Rahul Joshi",
+      rollNo: "CS011",
+      riskLevel: 'HIGH',
+      predictedGrade: 45,
+      passLikelihood: 35,
+      issues: ["Declining attendance", "Poor CIAT 2 performance", "Missing assignments"],
+      recommendations: ["Schedule one-on-one session", "Provide additional practice materials", "Contact parents"]
+    },
+    {
+      studentName: "Kavya Rao",
+      rollNo: "CS012",
+      riskLevel: 'MEDIUM',
+      predictedGrade: 62,
+      passLikelihood: 70,
+      issues: ["Inconsistent performance", "Weak in practical sessions"],
+      recommendations: ["Focus on hands-on practice", "Pair with strong peer for group work"]
+    },
+    {
+      studentName: "Anjali Kumar",
+      rollNo: "CS010",
+      riskLevel: 'LOW',
+      predictedGrade: 85,
+      passLikelihood: 95,
+      issues: [],
+      recommendations: ["Consider for advanced topics", "Potential peer mentor"]
+    }
+  ];
+
+  const teachingInsights: TeachingInsight[] = [
+    {
+      metric: "Class Engagement",
+      value: 78,
+      trend: 'UP',
+      suggestion: "Interactive sessions are working well. Continue with current approach."
+    },
+    {
+      metric: "Concept Clarity",
+      value: 65,
+      trend: 'DOWN',
+      suggestion: "Students struggling with Unit 3. Consider additional examples and practice."
+    },
+    {
+      metric: "Assignment Quality",
+      value: 82,
+      trend: 'STABLE',
+      suggestion: "Good assignment completion rate. Maintain current standards."
+    }
+  ];
 
   const addTodo = () => {
     if (!newTask.trim()) return;
@@ -33,13 +111,197 @@ const StaffInsights: React.FC = () => {
   const toggleTodo = (id: number) => setTodos(todos.map(t => t.id === id ? { ...t, done: !t.done } : t));
   const deleteTodo = (id: number) => setTodos(todos.filter(t => t.id !== id));
 
+  const getRiskColor = (level: string) => {
+    switch (level) {
+      case 'CRITICAL': return 'destructive';
+      case 'HIGH': return 'destructive';
+      case 'MEDIUM': return 'secondary';
+      case 'LOW': return 'default';
+      default: return 'default';
+    }
+  };
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'UP': return <TrendingUp className="w-4 h-4 text-green-600" />;
+      case 'DOWN': return <AlertTriangle className="w-4 h-4 text-red-600" />;
+      case 'STABLE': return <Target className="w-4 h-4 text-blue-600" />;
+      default: return null;
+    }
+  };
+
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold text-foreground mb-1">AI Insights & Tasks</h1>
-      <p className="text-muted-foreground text-sm mb-8">AI-powered analysis and your task list</p>
+      <h1 className="text-2xl font-bold text-foreground mb-1">AI Teaching Assistant</h1>
+      <p className="text-muted-foreground text-sm mb-8">AI-powered insights to enhance your teaching effectiveness</p>
+
+      {/* Teaching Effectiveness Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {teachingInsights.map((insight, i) => (
+          <Card key={i} className="shadow-card">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-foreground">{insight.metric}</h3>
+                {getTrendIcon(insight.trend)}
+              </div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl font-bold text-foreground">{insight.value}%</span>
+                <Badge variant={insight.trend === 'UP' ? 'default' : insight.trend === 'DOWN' ? 'destructive' : 'secondary'} className="text-xs">
+                  {insight.trend === 'UP' ? '↗ Improving' : insight.trend === 'DOWN' ? '↘ Needs Attention' : '→ Stable'}
+                </Badge>
+              </div>
+              <Progress value={insight.value} className="h-2 mb-2" />
+              <p className="text-xs text-muted-foreground">{insight.suggestion}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Student Risk Predictions */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-600" />
+              Student Risk Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {studentRiskPredictions.map((student, i) => (
+                <div key={i} className="border border-border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground">{student.studentName}</h4>
+                      <p className="text-xs text-muted-foreground">{student.rollNo}</p>
+                    </div>
+                    <Badge variant={getRiskColor(student.riskLevel)} className="text-xs">
+                      {student.riskLevel} RISK
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Predicted Grade: </span>
+                      <span className={`font-medium ${student.predictedGrade >= 60 ? 'text-green-600' : 'text-red-600'}`}>
+                        {student.predictedGrade}%
+                      </span>
+                    </div>
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Pass Likelihood: </span>
+                      <span className={`font-medium ${student.passLikelihood >= 70 ? 'text-green-600' : 'text-red-600'}`}>
+                        {student.passLikelihood}%
+                      </span>
+                    </div>
+                  </div>
+                  {student.issues.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-xs font-medium text-foreground mb-1">Issues:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {student.issues.map((issue, j) => (
+                          <Badge key={j} variant="outline" className="text-xs">{issue}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs font-medium text-foreground mb-1">AI Recommendations:</p>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      {student.recommendations.map((rec, j) => (
+                        <li key={j} className="flex items-start gap-1">
+                          <Lightbulb className="w-3 h-3 text-yellow-500 mt-0.5 shrink-0" />
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI-Powered Recommendations */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Brain className="w-5 h-5 text-primary" />
+              Smart Teaching Recommendations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Curriculum Recommendations */}
+              <div className="border border-border rounded-lg p-3">
+                <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  Curriculum Insights
+                </h4>
+                <ul className="text-xs text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-1.5 shrink-0"></span>
+                    <span><strong>Unit 3 (Loops):</strong> 65% of students struggling. Recommend additional practice sessions.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 shrink-0"></span>
+                    <span><strong>Unit 1 (Basics):</strong> Strong foundation. Students ready for advanced concepts.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full mt-1.5 shrink-0"></span>
+                    <span><strong>Practical Sessions:</strong> Increase hands-on coding time by 20%.</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Engagement Strategies */}
+              <div className="border border-border rounded-lg p-3">
+                <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-green-600" />
+                  Engagement Strategies
+                </h4>
+                <ul className="text-xs text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <Award className="w-3 h-3 text-yellow-500 mt-0.5 shrink-0" />
+                    <span>Implement peer programming sessions - 85% engagement boost predicted</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Clock className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
+                    <span>Optimal class timing: 10-11 AM shows highest attention rates</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Target className="w-3 h-3 text-purple-500 mt-0.5 shrink-0" />
+                    <span>Break complex topics into 15-minute segments for better retention</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Assessment Insights */}
+              <div className="border border-border rounded-lg p-3">
+                <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-purple-600" />
+                  Assessment Optimization
+                </h4>
+                <ul className="text-xs text-muted-foreground space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 shrink-0"></span>
+                    <span>CIAT 1 average: 72% - Consider review session before CIAT 2</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 shrink-0"></span>
+                    <span>Question difficulty optimal - maintain current assessment level</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-1.5 shrink-0"></span>
+                    <span>Recommend weekly mini-quizzes to improve retention by 30%</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* AI Insights */}
+        {/* Original AI Insights */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-card">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -54,14 +316,6 @@ const StaffInsights: React.FC = () => {
             {insights.map((insight, i) => (
               <InsightCard key={i} type={insight.type} message={insight.message} />
             ))}
-          </div>
-          <div className="mt-4 bg-muted/30 border border-border rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-2">Recommendations</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2"><span>•</span> Complete Unit 3 topics to reach 80% syllabus target</li>
-              <li className="flex items-start gap-2"><span>•</span> Maintain current attendance streak for 3 more weeks</li>
-              <li className="flex items-start gap-2"><span>•</span> Submit pending lab reports before deadline</li>
-            </ul>
           </div>
         </div>
 

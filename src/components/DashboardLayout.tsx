@@ -20,11 +20,11 @@ const staffLinks = [
 
 const hodLinks = [
   { to: "/hod", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/hod/departments", label: "Departments", icon: Building2 },
+  { to: "/hod/departments", label: "Manage Department", icon: Building2 },
   { to: "/hod/staff", label: "Staff Management", icon: Users },
   { to: "/hod/attendance", label: "Attendance Monitor", icon: CalendarCheck },
   { to: "/hod/progress", label: "Syllabus Progress", icon: BookOpen },
-  { to: "/hod/academic", label: "Academic Progress", icon: ClipboardList },
+  { to: "/hod/academic", label: "Student Academic Progress", icon: ClipboardList },
   { to: "/hod/communication", label: "Communication", icon: MessageSquare },
   { to: "/hod/analytics", label: "Analytics & AI", icon: BarChart3 },
 ];

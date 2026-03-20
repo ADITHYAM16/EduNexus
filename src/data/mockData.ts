@@ -40,6 +40,52 @@ export const mockSubjectProgress = [
   { subject: "Data Structures", unit: "Unit 5", topicsTotal: 7, topicsCompleted: 0, percentage: 0 },
 ];
 
+// Unit-level syllabus progress per staff
+export const mockStaffUnitProgress: Record<string, { unit: string; completed: boolean }[]> = {
+  "staff-1": [
+    { unit: "Unit 1", completed: true },
+    { unit: "Unit 2", completed: true },
+    { unit: "Unit 3", completed: true },
+    { unit: "Unit 4", completed: false },
+    { unit: "Unit 5", completed: false },
+  ],
+  "staff-2": [
+    { unit: "Unit 1", completed: true },
+    { unit: "Unit 2", completed: true },
+    { unit: "Unit 3", completed: false },
+    { unit: "Unit 4", completed: false },
+    { unit: "Unit 5", completed: false },
+  ],
+  "staff-3": [
+    { unit: "Unit 1", completed: true },
+    { unit: "Unit 2", completed: true },
+    { unit: "Unit 3", completed: true },
+    { unit: "Unit 4", completed: true },
+    { unit: "Unit 5", completed: false },
+  ],
+  "staff-4": [
+    { unit: "Unit 1", completed: true },
+    { unit: "Unit 2", completed: true },
+    { unit: "Unit 3", completed: true },
+    { unit: "Unit 4", completed: false },
+    { unit: "Unit 5", completed: false },
+  ],
+  "staff-5": [
+    { unit: "Unit 1", completed: true },
+    { unit: "Unit 2", completed: true },
+    { unit: "Unit 3", completed: true },
+    { unit: "Unit 4", completed: true },
+    { unit: "Unit 5", completed: false },
+  ],
+  "staff-6": [
+    { unit: "Unit 1", completed: true },
+    { unit: "Unit 2", completed: true },
+    { unit: "Unit 3", completed: true },
+    { unit: "Unit 4", completed: false },
+    { unit: "Unit 5", completed: false },
+  ],
+};
+
 export const mockMessages = [
   { id: "m1", from: "Dr. Rajesh Kumar (HOD)", to: "All Staff", subject: "Faculty Meeting", body: "Please attend the faculty meeting on Friday at 3 PM.", date: "2026-03-04", type: "announcement" as const },
   { id: "m2", from: "Dr. Rajesh Kumar (HOD)", to: "Prof. Anita Sharma", subject: "Syllabus Review", body: "Please complete Unit 3 syllabus before next week.", date: "2026-03-03", type: "personal" as const },

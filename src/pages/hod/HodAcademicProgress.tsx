@@ -12,7 +12,7 @@ import { GraduationCap, Users, BookOpen, Download, UserPlus } from "lucide-react
 import { toast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
 
-const months = ["Month 1", "Month 2", "Month 3", "Month 4"];
+const assessmentTypes = ["CIAT 1", "CIAT 2", "Assignment 1", "Assignment 2"];
 
 const HodAcademicProgress: React.FC = () => {
   const { departments, addStudent } = useCollege();
@@ -48,29 +48,34 @@ const HodAcademicProgress: React.FC = () => {
     section.students.forEach(stu => {
       const baseRow: any = { "Roll No": stu.rollNo, "Name": stu.name, "Email": stu.email };
       section.subjects.forEach(sub => {
-        months.forEach((m, mi) => {
+        assessmentTypes.forEach((assessment, ai) => {
           const mark = stu.marks[sub.id] || 0;
-          // Simulate monthly variation
-          baseRow[`${sub.code} - ${m}`] = Math.max(0, Math.min(100, mark + Math.floor((mi - 1.5) * 3)));
+          // Simulate assessment variation
+          baseRow[`${sub.code} - ${assessment}`] = Math.max(0, Math.min(100, mark + Math.floor((ai - 1.5) * 5)));
         });
+        // Add CIAT averages
+        const ciat1 = Math.max(0, Math.min(100, (stu.marks[sub.id] || 0) + Math.floor(-1.5 * 5)));
+        const ciat2 = Math.max(0, Math.min(100, (stu.marks[sub.id] || 0) + Math.floor(-0.5 * 5)));
+        baseRow[`${sub.code} - CIAT 1 AVG`] = ciat1;
+        baseRow[`${sub.code} - CIAT 2 AVG`] = ciat2;
       });
       const allMarks = section.subjects.map(sub => stu.marks[sub.id] || 0);
-      baseRow["Average"] = allMarks.length > 0 ? Math.round(allMarks.reduce((a, b) => a + b, 0) / allMarks.length) : 0;
-      baseRow["Status"] = baseRow["Average"] >= 80 ? "Excellent" : baseRow["Average"] >= 60 ? "Average" : "At Risk";
+      baseRow["Overall Average"] = allMarks.length > 0 ? Math.round(allMarks.reduce((a, b) => a + b, 0) / allMarks.length) : 0;
+      baseRow["Status"] = baseRow["Overall Average"] >= 80 ? "Excellent" : baseRow["Overall Average"] >= 60 ? "Average" : "At Risk";
       rows.push(baseRow);
     });
 
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `${dept.name} - ${year.name} - Sec ${section.name}`);
-    XLSX.writeFile(wb, `Academic_Progress_${dept.name}_${year.name}_Section_${section.name}.xlsx`);
+    XLSX.writeFile(wb, `Student_Academic_Progress_${dept.name}_${year.name}_Section_${section.name}.xlsx`);
     toast({ title: "Exported", description: "Excel file downloaded successfully" });
   };
 
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-1">
-        <h1 className="text-2xl font-bold text-foreground">Academic Progress</h1>
+        <h1 className="text-2xl font-bold text-foreground">Student Academic Progress</h1>
         <div className="flex gap-2">
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
@@ -93,7 +98,7 @@ const HodAcademicProgress: React.FC = () => {
           </Button>
         </div>
       </div>
-      <p className="text-sm text-muted-foreground mb-6">View student performance — 4 month breakdown</p>
+      <p className="text-sm text-muted-foreground mb-6">View student performance — CIAT tracking</p>
 
       {/* Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -166,7 +171,7 @@ const HodAcademicProgress: React.FC = () => {
         </div>
       )}
 
-      {/* Student Table with 4-month columns */}
+      {/* Student Table with Assessment columns */}
       {section ? (
         <Card className="shadow-card">
           <CardHeader className="pb-3">
@@ -177,42 +182,59 @@ const HodAcademicProgress: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Roll No</TableHead>
-                    <TableHead>Name</TableHead>
-                    {section.subjects.map(sub =>
-                      months.map((m, mi) => (
-                        <TableHead key={`${sub.id}-${mi}`} className="text-center text-xs">{sub.code}<br />{m}</TableHead>
-                      ))
-                    )}
-                    <TableHead className="text-center">Avg</TableHead>
-                    <TableHead className="text-center">Status</TableHead>
+                    <TableHead rowSpan={2} className="text-center align-middle border-r">Roll No</TableHead>
+                    <TableHead rowSpan={2} className="text-center align-middle border-r">Name</TableHead>
+                    {section.subjects.map(sub => (
+                      <TableHead key={sub.id} colSpan={2} className="text-center text-xs border-r bg-gray-50">
+                        {sub.name} ({sub.code})
+                      </TableHead>
+                    ))}
+                    <TableHead rowSpan={2} className="text-center align-middle">Overall Avg</TableHead>
+                    <TableHead rowSpan={2} className="text-center align-middle">Status</TableHead>
+                  </TableRow>
+                  <TableRow>
+                    {section.subjects.map(sub => (
+                      <React.Fragment key={`${sub.id}-headers`}>
+                        <TableHead className="text-center text-xs bg-blue-50">CIAT 1</TableHead>
+                        <TableHead className="text-center text-xs bg-green-50 border-r">CIAT 2</TableHead>
+                      </React.Fragment>
+                    ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {section.students.map(stu => {
                     const allMarks = section.subjects.map(sub => stu.marks[sub.id] || 0);
-                    const avg = allMarks.length > 0 ? Math.round(allMarks.reduce((a, b) => a + b, 0) / allMarks.length) : 0;
+                    const overallAvg = allMarks.length > 0 ? Math.round(allMarks.reduce((a, b) => a + b, 0) / allMarks.length) : 0;
                     return (
                       <TableRow key={stu.id}>
-                        <TableCell className="font-mono text-xs">{stu.rollNo}</TableCell>
-                        <TableCell className="font-medium text-sm whitespace-nowrap">{stu.name}</TableCell>
-                        {section.subjects.map(sub =>
-                          months.map((_, mi) => {
-                            const mark = stu.marks[sub.id] || 0;
-                            const monthMark = Math.max(0, Math.min(100, mark + Math.floor((mi - 1.5) * 3)));
-                            return (
-                              <TableCell key={`${sub.id}-${mi}`} className="text-center text-xs">
-                                <span className={monthMark >= 80 ? "text-primary font-medium" : monthMark >= 60 ? "text-foreground" : "text-destructive font-medium"}>
-                                  {monthMark}
+                        <TableCell className="font-mono text-xs border-r">{stu.rollNo}</TableCell>
+                        <TableCell className="font-medium text-sm whitespace-nowrap border-r">{stu.name}</TableCell>
+                        {section.subjects.map(sub => {
+                          const baseMark = stu.marks[sub.id] || 0;
+                          const ciat1 = Math.max(0, Math.min(100, baseMark + Math.floor(Math.random() * 10 - 5)));
+                          const ciat2 = Math.max(0, Math.min(100, baseMark + Math.floor(Math.random() * 10 - 5)));
+                          
+                          return (
+                            <React.Fragment key={sub.id}>
+                              {/* CIAT 1 */}
+                              <TableCell className="text-center text-xs bg-blue-50">
+                                <span className={ciat1 >= 80 ? "text-blue-700 font-medium" : ciat1 >= 60 ? "text-blue-600" : "text-red-600 font-medium"}>
+                                  {ciat1}
                                 </span>
                               </TableCell>
-                            );
-                          })
-                        )}
-                        <TableCell className="text-center font-bold text-sm">{avg}</TableCell>
+                              {/* CIAT 2 */}
+                              <TableCell className="text-center text-xs bg-green-50 border-r">
+                                <span className={ciat2 >= 80 ? "text-green-700 font-medium" : ciat2 >= 60 ? "text-green-600" : "text-red-600 font-medium"}>
+                                  {ciat2}
+                                </span>
+                              </TableCell>
+                            </React.Fragment>
+                          );
+                        })}
+                        <TableCell className="text-center font-bold text-sm">{overallAvg}</TableCell>
                         <TableCell className="text-center">
-                          <Badge variant={avg >= 80 ? "default" : avg >= 60 ? "secondary" : "destructive"} className="text-xs">
-                            {avg >= 80 ? "Excellent" : avg >= 60 ? "Average" : "At Risk"}
+                          <Badge variant={overallAvg >= 80 ? "default" : overallAvg >= 60 ? "secondary" : "destructive"} className="text-xs">
+                            {overallAvg >= 80 ? "Excellent" : overallAvg >= 60 ? "Average" : "At Risk"}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -227,7 +249,7 @@ const HodAcademicProgress: React.FC = () => {
         <Card className="shadow-card">
           <CardContent className="py-16 text-center">
             <GraduationCap className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">Select a department, year, and section to view student progress</p>
+            <p className="text-muted-foreground text-sm">Select a department, year, and section to view student academic progress</p>
           </CardContent>
         </Card>
       )}

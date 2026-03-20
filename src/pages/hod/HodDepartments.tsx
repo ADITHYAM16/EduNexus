@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useCollege } from "@/contexts/CollegeContext";
+import { useStaff } from "@/contexts/StaffContext";
 import { mockStaffList } from "@/data/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,14 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Building2, BookOpen, Users, GraduationCap } from "lucide-react";
+import { Plus, Building2, BookOpen, Users, GraduationCap, Trash2, Pencil } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const HodDepartments: React.FC = () => {
-  const { departments, addDepartment, addSection, addSubject } = useCollege();
+  const { departments, addDepartment, addSection, addSubject, deleteSection, renameDepartment, deleteDepartment } = useCollege();
+  const { staffList } = useStaff();
+  const [editDeptOpen, setEditDeptOpen] = useState(false);
+  const [editDept, setEditDept] = useState<{ id: string; name: string } | null>(null);
   const [createDeptOpen, setCreateDeptOpen] = useState(false);
   const [deptName, setDeptName] = useState("");
   const [addSectionOpen, setAddSectionOpen] = useState(false);
@@ -51,6 +55,14 @@ const HodDepartments: React.FC = () => {
     setAddSubjectOpen(false);
   };
 
+  const handleRenameDept = () => {
+    if (!editDept || !editDept.name.trim()) return;
+    renameDepartment(editDept.id, editDept.name.trim());
+    toast({ title: "Department Updated", description: `Renamed to ${editDept.name.trim()}.` });
+    setEditDeptOpen(false);
+    setEditDept(null);
+  };
+
   const selectedDeptForSection = departments.find(d => d.id === sectionForm.deptId);
   const selectedDeptForSubject = departments.find(d => d.id === subjectForm.deptId);
   const selectedYearForSubject = selectedDeptForSubject?.years.find(y => y.id === subjectForm.yearId);
@@ -83,6 +95,14 @@ const HodDepartments: React.FC = () => {
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Building2 className="w-5 h-5 text-primary" />
                 {dept.name}
+                <button onClick={() => { setEditDept({ id: dept.id, name: dept.name }); setEditDeptOpen(true); }}
+                  className="ml-1 text-muted-foreground hover:text-primary transition-colors">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button onClick={() => { deleteDepartment(dept.id); toast({ title: "Department Deleted", description: `${dept.name} has been deleted.` }); }}
+                  className="ml-1 text-destructive hover:text-destructive/80 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -104,7 +124,12 @@ const HodDepartments: React.FC = () => {
                                 <Users className="w-3.5 h-3.5 text-muted-foreground" />
                                 Section {section.name}
                               </span>
-                              <span className="text-xs text-muted-foreground">{section.students.length} students</span>
+                              <div className="flex items-center gap-2">
+                                <button onClick={() => { deleteSection(dept.id, year.id, section.id); toast({ title: "Section Deleted", description: `Section ${section.name} has been deleted.` }); }}
+                                  className="text-destructive hover:text-destructive/80 transition-colors">
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                             {section.subjects.length > 0 ? (
                               <div className="space-y-1">
@@ -218,6 +243,19 @@ const HodDepartments: React.FC = () => {
               </Select>
             </div>
             <Button className="w-full" onClick={handleAddSubject}>Add Subject</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Edit Department Dialog */}
+      <Dialog open={editDeptOpen} onOpenChange={setEditDeptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Edit Department Name</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Department Name</Label>
+              <Input value={editDept?.name || ""} onChange={e => setEditDept(prev => prev ? { ...prev, name: e.target.value } : prev)} />
+            </div>
+            <Button className="w-full" onClick={handleRenameDept}>Save Changes</Button>
           </div>
         </DialogContent>
       </Dialog>

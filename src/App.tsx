@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CollegeProvider } from "@/contexts/CollegeContext";
+import { StaffProvider } from "@/contexts/StaffContext";
+import { TodoProvider } from "@/contexts/TodoContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import StaffDashboard from "@/pages/staff/StaffDashboard";
@@ -35,6 +37,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <CollegeProvider>
+            <StaffProvider>
+            <TodoProvider>
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
@@ -61,6 +65,8 @@ const App = () => (
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </TodoProvider>
+            </StaffProvider>
           </CollegeProvider>
         </AuthProvider>
       </BrowserRouter>

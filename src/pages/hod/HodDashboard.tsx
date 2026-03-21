@@ -22,7 +22,7 @@ const HodDashboard: React.FC = () => {
         <StatCard title="Total Staff" value={mockDepartmentStats.totalStaff} icon={Users} variant="primary" linkTo="/hod/staff" />
         <StatCard title="Avg Attendance" value={`${mockDepartmentStats.avgAttendance}%`} icon={CalendarCheck} variant="success" trend="up" trendValue="+3% vs last month" linkTo="/hod/attendance" />
         <StatCard title="Top Performer" value={topPerformer.name.replace("Prof. ", "")} icon={Award} variant="success" subtitle={`${topPerformer.attendance}% attendance`} linkTo="/hod/staff" />
-        <StatCard title="Announcements" value={announcementsCount} icon={MessageSquare} subtitle="Total sent" linkTo="/hod/communication" />
+        <StatCard title="Announcements" value={announcementsCount} icon={MessageSquare} variant="primary" subtitle="Total sent" linkTo="/hod/communication" />
       </div>
 
       {/* Pending Reminders */}

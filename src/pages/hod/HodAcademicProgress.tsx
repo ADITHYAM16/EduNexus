@@ -44,24 +44,23 @@ const HodAcademicProgress: React.FC = () => {
       toast({ title: "Error", description: "Select department, year, and section first", variant: "destructive" });
       return;
     }
-    const rows: any[] = [];
+    const rows: Record<string, string | number>[] = [];
     section.students.forEach(stu => {
-      const baseRow: any = { "Roll No": stu.rollNo, "Name": stu.name, "Email": stu.email };
+      const baseRow: Record<string, string | number> = { "Roll No": stu.rollNo, "Name": stu.name, "Email": stu.email };
       section.subjects.forEach(sub => {
         assessmentTypes.forEach((assessment, ai) => {
           const mark = stu.marks[sub.id] || 0;
-          // Simulate assessment variation
           baseRow[`${sub.code} - ${assessment}`] = Math.max(0, Math.min(100, mark + Math.floor((ai - 1.5) * 5)));
         });
-        // Add CIAT averages
         const ciat1 = Math.max(0, Math.min(100, (stu.marks[sub.id] || 0) + Math.floor(-1.5 * 5)));
         const ciat2 = Math.max(0, Math.min(100, (stu.marks[sub.id] || 0) + Math.floor(-0.5 * 5)));
         baseRow[`${sub.code} - CIAT 1 AVG`] = ciat1;
         baseRow[`${sub.code} - CIAT 2 AVG`] = ciat2;
       });
       const allMarks = section.subjects.map(sub => stu.marks[sub.id] || 0);
-      baseRow["Overall Average"] = allMarks.length > 0 ? Math.round(allMarks.reduce((a, b) => a + b, 0) / allMarks.length) : 0;
-      baseRow["Status"] = baseRow["Overall Average"] >= 80 ? "Excellent" : baseRow["Overall Average"] >= 60 ? "Average" : "At Risk";
+      const overallAvg = allMarks.length > 0 ? Math.round(allMarks.reduce((a, b) => a + b, 0) / allMarks.length) : 0;
+      baseRow["Overall Average"] = overallAvg;
+      baseRow["Status"] = overallAvg >= 80 ? "Excellent" : overallAvg >= 60 ? "Average" : "At Risk";
       rows.push(baseRow);
     });
 

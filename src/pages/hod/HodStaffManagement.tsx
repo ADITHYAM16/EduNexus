@@ -1,21 +1,19 @@
 import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { mockStaffList } from "@/data/mockData";
-import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { BookOpen, CalendarCheck, Pencil, Users, TrendingUp, Search, GraduationCap, LayoutGrid, UserPlus, Trash2 } from "lucide-react";
-import { useCollege } from "@/contexts/CollegeContext";
-import { mockStaffUnitProgress } from "@/data/mockData";
+import { CalendarCheck, Users, TrendingUp, Search, UserPlus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { mockStaffSubjectProgress } from "@/data/mockData";
 import { useStaff } from "@/contexts/StaffContext";
 
 type Staff = typeof mockStaffList[0];
 
 const HodStaffManagement: React.FC = () => {
   const { staffList, addStaff, deleteStaff } = useStaff();
-  const [selected, setSelected] = useState<Staff | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<Staff | null>(null);
   const [search, setSearch] = useState("");
@@ -36,32 +34,24 @@ const HodStaffManagement: React.FC = () => {
     s.subject.toLowerCase().includes(search.toLowerCase())
   );
 
-  const getSyllabusFromUnits = (staffId: string) => {
-    const units = mockStaffUnitProgress[staffId] || [];
-    if (!units.length) return 0;
-    return Math.round((units.filter(u => u.completed).length / units.length) * 100);
+  const getOverallComplete = (staffId: string) => {
+    const subjects = mockStaffSubjectProgress[staffId] || [];
+    if (!subjects.length) return 0;
+    const total = subjects.reduce((a, s) => a + s.units.length, 0);
+    const done = subjects.reduce((a, s) => a + s.units.filter(Boolean).length, 0);
+    return Math.round((done / total) * 100);
   };
 
-  const avgAttendance = Math.round(staffList.reduce((a, s) => a + s.attendance, 0) / staffList.length);
-  const avgSyllabus = Math.round(staffList.reduce((a, s) => a + getSyllabusFromUnits(s.id), 0) / staffList.length);
   const topAttendanceStaff = [...staffList].sort((a, b) => b.attendance - a.attendance)[0];
-  const topSyllabusStaff = [...staffList].sort((a, b) => getSyllabusFromUnits(b.id) - getSyllabusFromUnits(a.id))[0];
+  const topSyllabusStaff = [...staffList].sort((a, b) => getOverallComplete(b.id) - getOverallComplete(a.id))[0];
 
-  const { departments, addDepartment, addSection, addSubject, deleteSection, renameDepartment, deleteDepartment, getStaffAssignments } = useCollege();
-
-  const openView = (staff: Staff) => { setSelected(staff); setEditMode(false); };
   const openEdit = (staff: Staff, e: React.MouseEvent) => {
     e.stopPropagation();
-    setSelected(staff);
     setEditForm({ ...staff });
     setEditMode(true);
   };
-  const handleSave = () => {
-    if (!editForm) return;
-    setSelected(editForm);
-    setEditMode(false);
-  };
-  const handleClose = () => { setSelected(null); setEditMode(false); setEditForm(null); };
+  const handleSave = () => { setEditMode(false); setEditForm(null); };
+  const handleClose = () => { setEditMode(false); setEditForm(null); };
 
   return (
     <DashboardLayout>
@@ -75,17 +65,17 @@ const HodStaffManagement: React.FC = () => {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 shadow-card">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 shadow-card cursor-pointer hover:border-primary/40 hover:shadow-elevated hover:scale-[1.02] hover:bg-primary/5 transition-all duration-200 group">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
             <Users className="w-5 h-5 text-primary" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Total Staff</p>
-            <p className="text-lg font-bold text-foreground">{staffList.length}</p>
+            <p className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">{staffList.length}</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 shadow-card">
-          <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 shadow-card cursor-pointer hover:border-success/40 hover:shadow-elevated hover:scale-[1.02] hover:bg-success/5 transition-all duration-200 group">
+          <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center group-hover:bg-success/20 transition-colors">
             <CalendarCheck className="w-5 h-5 text-success" />
           </div>
           <div>
@@ -94,13 +84,13 @@ const HodStaffManagement: React.FC = () => {
             <p className="text-xs text-muted-foreground truncate max-w-[110px]">{topAttendanceStaff?.name}</p>
           </div>
         </div>
-        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 shadow-card">
-          <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+        <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3 shadow-card cursor-pointer hover:border-secondary/40 hover:shadow-elevated hover:scale-[1.02] hover:bg-secondary/5 transition-all duration-200 group">
+          <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
             <TrendingUp className="w-5 h-5 text-secondary" />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Highest Syllabus</p>
-            <p className="text-lg font-bold text-secondary">{getSyllabusFromUnits(topSyllabusStaff?.id)}%</p>
+            <p className="text-lg font-bold text-secondary">{getOverallComplete(topSyllabusStaff?.id)}%</p>
             <p className="text-xs text-muted-foreground truncate max-w-[110px]">{topSyllabusStaff?.name}</p>
           </div>
         </div>
@@ -129,147 +119,110 @@ const HodStaffManagement: React.FC = () => {
               <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Staff Member</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Subject</th>
               <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Attendance</th>
-              <th className="text-left px-4 py-3 text-xs font-semibold text-muted-foreground">Syllabus</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((staff, i) => (
-              <tr key={staff.id} onClick={() => openView(staff)}
-                className={`cursor-pointer hover:bg-muted/30 transition-colors ${i !== filtered.length - 1 ? "border-b border-border" : ""}`}>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary">{staff.name.charAt(0)}</span>
-                    </div>
-                    <span className="font-medium text-foreground">{staff.name}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{staff.subject}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    staff.attendance >= 85 ? "bg-success/10 text-success" : staff.attendance >= 75 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
-                  }`}>{staff.attendance}%</span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Progress value={getSyllabusFromUnits(staff.id)} className="h-1.5 w-20" />
-                    <span className="text-xs text-muted-foreground">{getSyllabusFromUnits(staff.id)}%</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(staff.id); }}
-                    className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {filtered.map((staff, i) => {
+              const isExpanded = expandedId === staff.id;
+              const subjects = mockStaffSubjectProgress[staff.id] || [];
+              const overall = getOverallComplete(staff.id);
+              return (
+                <React.Fragment key={staff.id}>
+                  <tr
+                    onClick={() => setExpandedId(isExpanded ? null : staff.id)}
+                    className={`cursor-pointer hover:bg-muted/30 transition-colors ${
+                      i !== filtered.length - 1 || isExpanded ? "border-b border-border" : ""
+                    } ${isExpanded ? "bg-muted/20" : ""}`}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-primary">{staff.name.charAt(0)}</span>
+                        </div>
+                        <span className="font-medium text-foreground">{staff.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{staff.subject}</td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        staff.attendance >= 85 ? "bg-success/10 text-success" : staff.attendance >= 75 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                      }`}>{staff.attendance}%</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 justify-end">
+                        <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(staff.id); }}
+                          className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Inline Expanded Detail */}
+                  {isExpanded && (
+                    <tr className={i !== filtered.length - 1 ? "border-b border-border" : ""}>
+                      <td colSpan={4} className="px-4 py-4 bg-muted/10">
+                        <div className="border border-border rounded-xl p-4 bg-card shadow-card">
+                          {/* Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <span className="text-base font-bold text-primary">{staff.name.charAt(0)}</span>
+                              </div>
+                              <div>
+                                <p className="font-semibold text-foreground text-sm">{staff.name}</p>
+                                <p className="text-xs text-muted-foreground">Associate Professor</p>
+                              </div>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                              overall >= 80 ? "bg-success/10 text-success border-success/30"
+                              : overall >= 60 ? "bg-warning/10 text-warning border-warning/30"
+                              : "bg-destructive/10 text-destructive border-destructive/30"
+                            }`}>{overall}% Complete</span>
+                          </div>
+
+                          {/* Subject Unit Pills */}
+                          <div className="space-y-3">
+                            {subjects.length === 0 ? (
+                              <p className="text-xs text-muted-foreground text-center py-2">No subject data available.</p>
+                            ) : subjects.map((sub) => {
+                              const done = sub.units.filter(Boolean).length;
+                              return (
+                                <div key={sub.subject} className="border border-border rounded-lg p-3">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-sm font-semibold text-foreground">{sub.subject}</span>
+                                    <span className="text-xs text-muted-foreground">{done}/{sub.units.length} units</span>
+                                  </div>
+                                  <div className="flex gap-2 flex-wrap">
+                                    {sub.units.map((completed, idx) => (
+                                      <span key={idx} className={`px-3 py-1 rounded-md text-xs font-semibold ${
+                                        completed
+                                          ? "bg-success/15 text-success"
+                                          : "bg-muted text-muted-foreground"
+                                      }`}>
+                                        U{idx + 1}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
         {filtered.length === 0 && (
           <p className="text-center text-muted-foreground text-sm py-8">No staff found.</p>
         )}
       </div>
-
-      {/* View Dialog */}
-      <Dialog open={!!selected && !editMode} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">{selected?.name}</DialogTitle>
-            <p className="text-xs text-muted-foreground">{selected?.email}</p>
-          </DialogHeader>
-          {selected && (() => {
-            const assignments = getStaffAssignments(selected.id);
-            const uniqueYears = [...new Set(assignments.map(a => a.year.name))];
-            const groupedByYear = uniqueYears.map(yearName => ({
-              year: yearName,
-              classes: assignments.filter(a => a.year.name === yearName),
-            }));
-            return (
-              <div className="space-y-5 pt-1">
-                {/* Staff Info */}
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-lg font-bold text-primary">{selected.name.charAt(0)}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">{selected.name}</p>
-                    <p className="text-xs text-muted-foreground">{selected.subject}</p>
-                  </div>
-                </div>
-
-                {/* Overview Stats */}
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Years Handling</p>
-                    <p className="text-xl font-bold text-primary">{uniqueYears.length || "—"}</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Classes Handled</p>
-                    <p className="text-xl font-bold text-secondary">{assignments.length || "—"}</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Syllabus Done</p>
-                    <p className={`text-xl font-bold ${
-                      getSyllabusFromUnits(selected.id) >= 80 ? "text-success" : getSyllabusFromUnits(selected.id) >= 60 ? "text-warning" : "text-destructive"
-                    }`}>{getSyllabusFromUnits(selected.id)}%</p>
-                  </div>
-                </div>
-
-                {/* Classes grouped by Year */}
-                {assignments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">No classes assigned to this staff yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-sm font-semibold text-foreground">Academic Overview</p>
-                    {groupedByYear.map(({ year, classes }) => (
-                      <div key={year}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <GraduationCap className="w-4 h-4 text-secondary" />
-                          <span className="text-sm font-semibold text-foreground">{year}</span>
-                          <span className="text-xs text-muted-foreground">({classes.length} {classes.length === 1 ? "class" : "classes"})</span>
-                        </div>
-                        <div className="space-y-2 pl-6">
-                          {classes.map((a, i) => (
-                            <div key={i} className="border border-border rounded-lg p-3 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <LayoutGrid className="w-3.5 h-3.5 text-muted-foreground" />
-                                  <span className="text-sm font-medium text-foreground">Section {a.section.name}</span>
-                                </div>
-                                <span className="text-xs text-muted-foreground">{a.dept.name}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <BookOpen className="w-3.5 h-3.5 text-primary" />
-                                <span className="text-xs text-foreground">{a.subject.code} — {a.subject.name}</span>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground mb-2">Portion Completed</p>
-                                <div className="flex gap-1.5 flex-wrap">
-                                  {(mockStaffUnitProgress[selected.id] || []).map((u) => (
-                                    <span key={u.unit} className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                                      u.completed
-                                        ? "bg-success/10 text-success border-success/30"
-                                        : "bg-muted text-muted-foreground border-border"
-                                    }`}>
-                                      {u.unit}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={editMode} onOpenChange={handleClose}>

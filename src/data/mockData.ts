@@ -40,6 +40,39 @@ export const mockSubjectProgress = [
   { subject: "Data Structures", unit: "Unit 5", topicsTotal: 7, topicsCompleted: 0, percentage: 0 },
 ];
 
+// Multi-subject unit progress per staff (for expanded view)
+export const mockStaffSubjectProgress: Record<string, { subject: string; units: boolean[] }[]> = {
+  "staff-1": [
+    { subject: "Data Structures", units: [true, true, true, false, false] },
+    { subject: "Algorithms", units: [true, true, false, false, false] },
+    { subject: "Discrete Math", units: [true, true, true, true, false] },
+  ],
+  "staff-2": [
+    { subject: "Operating Systems", units: [true, true, false, false, false] },
+    { subject: "System Programming", units: [true, false, false, false, false] },
+  ],
+  "staff-3": [
+    { subject: "Database Systems", units: [true, true, true, true, false] },
+    { subject: "SQL & NoSQL", units: [true, true, true, true, true] },
+    { subject: "Data Warehousing", units: [true, true, true, false, false] },
+  ],
+  "staff-4": [
+    { subject: "Computer Networks", units: [true, true, true, false, false] },
+    { subject: "Network Security", units: [true, true, false, false, false] },
+  ],
+  "staff-5": [
+    { subject: "Software Engineering", units: [true, true, true, true, false] },
+    { subject: "Agile Methods", units: [true, true, true, false, false] },
+    { subject: "Testing", units: [true, true, false, false, false] },
+  ],
+  "staff-6": [
+    { subject: "Machine Learning", units: [true, true, false, false, false] },
+    { subject: "Deep Learning", units: [true, true, true, false, false] },
+    { subject: "Data Analytics", units: [true, true, true, true, false] },
+    { subject: "NLP", units: [true, false, false, false, false] },
+  ],
+};
+
 // Unit-level syllabus progress per staff
 export const mockStaffUnitProgress: Record<string, { unit: string; completed: boolean }[]> = {
   "staff-1": [

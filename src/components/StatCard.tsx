@@ -36,18 +36,44 @@ const StatCard: React.FC<StatCardProps> = ({
   const navigate = useNavigate();
   const handleClick = () => { if (linkTo) navigate(linkTo); };
 
+  const hoverBorder = {
+    default:  "hover:border-primary/40",
+    primary:  "hover:border-primary/60",
+    success:  "hover:border-success/60",
+    warning:  "hover:border-warning/60",
+    danger:   "hover:border-destructive/60",
+  };
+
+  const hoverBg = {
+    default:  "hover:bg-primary/5",
+    primary:  "hover:bg-primary/10",
+    success:  "hover:bg-success/10",
+    warning:  "hover:bg-warning/10",
+    danger:   "hover:bg-destructive/10",
+  };
+
+  const hoverIcon = {
+    default:  "group-hover:bg-primary/20",
+    primary:  "group-hover:bg-primary/25",
+    success:  "group-hover:bg-success/25",
+    warning:  "group-hover:bg-warning/25",
+    danger:   "group-hover:bg-destructive/25",
+  };
+
   return (
     <div
       onClick={handleClick}
-      className={`rounded-xl p-5 shadow-card animate-fade-in ${variantStyles[variant]} ${linkTo ? "cursor-pointer hover:scale-[1.02] transition-transform" : ""}`}
+      className={`group rounded-xl p-5 shadow-card animate-fade-in transition-all duration-200
+        ${variantStyles[variant]}
+        ${linkTo ? `cursor-pointer hover:scale-[1.03] hover:shadow-elevated ${hoverBorder[variant]} ${hoverBg[variant]}` : ""}`}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-          <p className="text-2xl font-bold text-card-foreground">{value}</p>
+          <p className="text-2xl font-bold text-card-foreground transition-colors duration-200">{value}</p>
           {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         </div>
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${iconVariantStyles[variant]}`}>
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${iconVariantStyles[variant]} ${linkTo ? hoverIcon[variant] : ""}`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>

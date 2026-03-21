@@ -26,13 +26,13 @@ const StaffDashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard title="Attendance" value={`${attendance}%`} icon={CalendarCheck} variant="primary" trend="up" trendValue="+2% this week" linkTo="/staff/attendance" />
         <StatCard title="Syllabus Done" value={`${syllabus}%`} icon={BookOpen} variant="warning" trend="up" trendValue="+5% this month" linkTo="/staff/academic" />
-        <StatCard title="AI Insights" value={insights.length} icon={Brain} variant="success" subtitle="View insights" linkTo="/staff/insights" />
         <StatCard title="Messages" value={mockMessages.length} icon={MessageSquare} subtitle="1 unread" linkTo="/staff/messages" />
+        <StatCard title="AI Insights" value={insights.length} icon={Brain} variant="success" subtitle="View insights" linkTo="/staff/insights" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}
-        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5 shadow-card">
+        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-5 shadow-card hover:shadow-elevated hover:border-primary/30 transition-all duration-200">
           <h2 className="text-sm font-semibold text-foreground mb-4">Monthly Attendance Trend</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -59,12 +59,12 @@ const StaffDashboard: React.FC = () => {
       </div>
 
       {/* Recent Messages */}
-      <div className="mt-6 bg-card border border-border rounded-xl p-5 shadow-card">
+      <div className="mt-6 bg-card border border-border rounded-xl p-5 shadow-card hover:shadow-elevated hover:border-primary/20 transition-all duration-200">
         <h2 className="text-sm font-semibold text-foreground mb-3">Recent Messages</h2>
         <div className="space-y-3">
           {recentMessages.map((msg) => (
-            <div key={msg.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-lg">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <div key={msg.id} className="flex items-start gap-3 p-3 bg-muted/40 rounded-lg hover:bg-primary/5 hover:scale-[1.01] hover:shadow-card transition-all duration-200 cursor-pointer">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                 <MessageSquare className="w-4 h-4 text-primary" />
               </div>
               <div className="min-w-0">

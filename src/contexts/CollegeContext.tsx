@@ -13,6 +13,9 @@ interface CollegeContextType {
   deleteSection: (deptId: string, yearId: string, sectionId: string) => void;
   renameDepartment: (deptId: string, name: string) => void;
   deleteDepartment: (deptId: string) => void;
+  updateStudent: (deptId: string, yearId: string, sectionId: string, studentId: string, patch: Partial<Pick<Student, "name" | "rollNo" | "email">>) => void;
+  updateStudentCiat: (deptId: string, yearId: string, sectionId: string, studentId: string, subjectId: string, c1: number, c2: number) => void;
+  deleteStudent: (deptId: string, yearId: string, sectionId: string, studentId: string) => void;
 }
 
 const CollegeContext = createContext<CollegeContextType | null>(null);
@@ -126,8 +129,52 @@ export const CollegeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setDepartments(prev => prev.filter(d => d.id !== deptId));
   }, []);
 
+  const updateStudent = useCallback((deptId: string, yearId: string, sectionId: string, studentId: string, patch: Partial<Pick<Student, "name" | "rollNo" | "email">>) => {
+    setDepartments(prev => prev.map(d => d.id !== deptId ? d : {
+      ...d,
+      years: d.years.map(y => y.id !== yearId ? y : {
+        ...y,
+        sections: y.sections.map(sec => sec.id !== sectionId ? sec : {
+          ...sec,
+          students: sec.students.map(stu => stu.id !== studentId ? stu : { ...stu, ...patch }),
+        }),
+      }),
+    }));
+  }, []);
+
+  const updateStudentCiat = useCallback((deptId: string, yearId: string, sectionId: string, studentId: string, subjectId: string, c1: number, c2: number) => {
+    setDepartments(prev => prev.map(d => d.id !== deptId ? d : {
+      ...d,
+      years: d.years.map(y => y.id !== yearId ? y : {
+        ...y,
+        sections: y.sections.map(sec => sec.id !== sectionId ? sec : {
+          ...sec,
+          students: sec.students.map(stu => stu.id !== studentId ? stu : {
+            ...stu,
+            ciat1: { ...stu.ciat1, [subjectId]: c1 },
+            ciat2: { ...stu.ciat2, [subjectId]: c2 },
+            marks: { ...stu.marks, [subjectId]: Math.round((c1 + c2) / 2) },
+          }),
+        }),
+      }),
+    }));
+  }, []);
+
+  const deleteStudent = useCallback((deptId: string, yearId: string, sectionId: string, studentId: string) => {
+    setDepartments(prev => prev.map(d => d.id !== deptId ? d : {
+      ...d,
+      years: d.years.map(y => y.id !== yearId ? y : {
+        ...y,
+        sections: y.sections.map(sec => sec.id !== sectionId ? sec : {
+          ...sec,
+          students: sec.students.filter(stu => stu.id !== studentId),
+        }),
+      }),
+    }));
+  }, []);
+
   return (
-    <CollegeContext.Provider value={{ departments, addDepartment, addSection, addSubject, addYear, addStudent, updateStudentMark, getStaffAssignments, deleteSection, renameDepartment, deleteDepartment }}>
+    <CollegeContext.Provider value={{ departments, addDepartment, addSection, addSubject, addYear, addStudent, updateStudentMark, getStaffAssignments, deleteSection, renameDepartment, deleteDepartment, updateStudent, updateStudentCiat, deleteStudent }}>
       {children}
     </CollegeContext.Provider>
   );

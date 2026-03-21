@@ -12,9 +12,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const staffLinks = [
   { to: "/staff", label: "Dashboard", icon: LayoutDashboard },
   { to: "/staff/attendance", label: "Attendance", icon: CalendarCheck },
+  { to: "/staff/messages", label: "Messages", icon: MessageSquare },
   { to: "/staff/progress", label: "Student Academic Progress", icon: BookOpen },
   { to: "/staff/academic", label: "Syllabus Progress", icon: ClipboardList },
-  { to: "/staff/messages", label: "Messages", icon: MessageSquare },
   { to: "/staff/insights", label: "AI Insights", icon: Brain },
 ];
 
@@ -37,13 +37,11 @@ const SidebarContent: React.FC<{
   onNavigate?: () => void;
 }> = ({ links, location, user, logout, onNavigate }) => (
   <>
-    <div className="p-5 border-b border-sidebar-border">
-      <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 rounded-lg overflow-hidden bg-white flex items-center justify-center">
-          <img src="/logo.png" alt="EduNexus" className="w-full h-full object-contain" />
-        </div>
+      <div className="p-5 border-b border-sidebar-border">
+      <div className="flex items-center gap-3">
+        <img src="/logo.png" alt="EduNexus" className="w-14 h-14 object-contain" style={{ mixBlendMode: "multiply" }} />
         <div>
-          <h1 className="text-sm font-bold text-sidebar-foreground">EduNexus</h1>
+          <p className="text-xl font-bold text-sidebar-foreground font-cinzel">EduNexus</p>
           <p className="text-[11px] text-sidebar-foreground/60">
             {user?.role === "ROLE_HOD" ? "HOD Admin" : "Staff Portal"}
           </p>
@@ -111,7 +109,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, [dark]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen h-screen overflow-hidden">
       {/* Desktop Sidebar */}
       {!isMobile && (
         <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col shrink-0">
@@ -144,7 +142,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
                 <div className="w-7 h-7 rounded-md overflow-hidden bg-white flex items-center justify-center">
                   <img src="/logo.png" alt="EduNexus" className="w-full h-full object-contain" />
                 </div>
-                <span className="text-sm font-bold text-foreground">EduNexus</span>
+                <span className="text-sm font-bold text-foreground font-cinzel">EduNexus</span>
               </div>
             )}
             {!isMobile && <h2 className="text-sm font-medium text-muted-foreground">{location.pathname.split("/").pop()?.replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase()) || "Dashboard"}</h2>}
@@ -158,7 +156,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overscroll-contain">
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">{children}</div>
         </main>
       </div>

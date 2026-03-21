@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useCollege } from "@/contexts/CollegeContext";
 import { useStaff } from "@/contexts/StaffContext";
-import { mockStaffList } from "@/data/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,7 +42,7 @@ const HodDepartments: React.FC = () => {
 
   const handleAddSubject = () => {
     if (!subjectForm.deptId || !subjectForm.yearId || !subjectForm.sectionId || !subjectForm.name.trim() || !subjectForm.code.trim()) return;
-    const staff = mockStaffList.find(s => s.id === subjectForm.staffId);
+    const staff = staffList.find(s => s.id === subjectForm.staffId);
     addSubject(subjectForm.deptId, subjectForm.yearId, subjectForm.sectionId, {
       name: subjectForm.name.trim(),
       code: subjectForm.code.trim(),
@@ -239,7 +238,7 @@ const HodDepartments: React.FC = () => {
               <Label>Assign Staff</Label>
               <Select value={subjectForm.staffId} onValueChange={v => setSubjectForm({ ...subjectForm, staffId: v })}>
                 <SelectTrigger><SelectValue placeholder="Select staff (optional)" /></SelectTrigger>
-                <SelectContent>{mockStaffList.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                <SelectContent>{staffList.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <Button className="w-full" onClick={handleAddSubject}>Add Subject</Button>

@@ -80,26 +80,7 @@ const StaffInsights: React.FC = () => {
     }
   ];
 
-  const teachingInsights: TeachingInsight[] = [
-    {
-      metric: "Class Engagement",
-      value: 78,
-      trend: 'UP',
-      suggestion: "Interactive sessions are working well. Continue with current approach."
-    },
-    {
-      metric: "Concept Clarity",
-      value: 65,
-      trend: 'DOWN',
-      suggestion: "Students struggling with Unit 3. Consider additional examples and practice."
-    },
-    {
-      metric: "Assignment Quality",
-      value: 82,
-      trend: 'STABLE',
-      suggestion: "Good assignment completion rate. Maintain current standards."
-    }
-  ];
+  const teachingInsights: TeachingInsight[] = [];
 
   const addTodo = () => {
     if (!newTask.trim()) return;
@@ -135,29 +116,7 @@ const StaffInsights: React.FC = () => {
       <h1 className="text-2xl font-bold text-foreground mb-1">AI Teaching Assistant</h1>
       <p className="text-muted-foreground text-sm mb-8">AI-powered insights to enhance your teaching effectiveness</p>
 
-      {/* Teaching Effectiveness Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {teachingInsights.map((insight, i) => (
-          <Card key={i} className="shadow-card">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-foreground">{insight.metric}</h3>
-                {getTrendIcon(insight.trend)}
-              </div>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl font-bold text-foreground">{insight.value}%</span>
-                <Badge variant={insight.trend === 'UP' ? 'default' : insight.trend === 'DOWN' ? 'destructive' : 'secondary'} className="text-xs">
-                  {insight.trend === 'UP' ? '↗ Improving' : insight.trend === 'DOWN' ? '↘ Needs Attention' : '→ Stable'}
-                </Badge>
-              </div>
-              <Progress value={insight.value} className="h-2 mb-2" />
-              <p className="text-xs text-muted-foreground">{insight.suggestion}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-6 mb-6">
         {/* Student Risk Predictions */}
         <Card className="shadow-card">
           <CardHeader>
@@ -220,84 +179,6 @@ const StaffInsights: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* AI-Powered Recommendations */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="w-5 h-5 text-primary" />
-              Smart Teaching Recommendations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Curriculum Recommendations */}
-              <div className="border border-border rounded-lg p-3">
-                <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
-                  Curriculum Insights
-                </h4>
-                <ul className="text-xs text-muted-foreground space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-1.5 shrink-0"></span>
-                    <span><strong>Unit 3 (Loops):</strong> 65% of students struggling. Recommend additional practice sessions.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 shrink-0"></span>
-                    <span><strong>Unit 1 (Basics):</strong> Strong foundation. Students ready for advanced concepts.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full mt-1.5 shrink-0"></span>
-                    <span><strong>Practical Sessions:</strong> Increase hands-on coding time by 20%.</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Engagement Strategies */}
-              <div className="border border-border rounded-lg p-3">
-                <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-green-600" />
-                  Engagement Strategies
-                </h4>
-                <ul className="text-xs text-muted-foreground space-y-2">
-                  <li className="flex items-start gap-2">
-                    <Award className="w-3 h-3 text-yellow-500 mt-0.5 shrink-0" />
-                    <span>Implement peer programming sessions - 85% engagement boost predicted</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Clock className="w-3 h-3 text-blue-500 mt-0.5 shrink-0" />
-                    <span>Optimal class timing: 10-11 AM shows highest attention rates</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Target className="w-3 h-3 text-purple-500 mt-0.5 shrink-0" />
-                    <span>Break complex topics into 15-minute segments for better retention</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Assessment Insights */}
-              <div className="border border-border rounded-lg p-3">
-                <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-purple-600" />
-                  Assessment Optimization
-                </h4>
-                <ul className="text-xs text-muted-foreground space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 shrink-0"></span>
-                    <span>CIAT 1 average: 72% - Consider review session before CIAT 2</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-1.5 shrink-0"></span>
-                    <span>Question difficulty optimal - maintain current assessment level</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full mt-1.5 shrink-0"></span>
-                    <span>Recommend weekly mini-quizzes to improve retention by 30%</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

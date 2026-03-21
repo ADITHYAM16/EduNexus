@@ -5,7 +5,9 @@ export interface Student {
   name: string;
   rollNo: string;
   email: string;
-  marks: Record<string, number>; // subjectId -> marks
+  marks: Record<string, number>;      // subjectId -> overall (kept for compatibility)
+  ciat1: Record<string, number>;      // subjectId -> CIAT 1 mark
+  ciat2: Record<string, number>;      // subjectId -> CIAT 2 mark
 }
 
 export interface Subject {
@@ -45,13 +47,19 @@ const studentNames = [
 function generateStudents(count: number, startIdx: number, subjects: Subject[]): Student[] {
   return Array.from({ length: count }, (_, i) => {
     const marks: Record<string, number> = {};
-    subjects.forEach(s => { marks[s.id] = Math.floor(Math.random() * 41) + 60; });
+    const ciat1: Record<string, number> = {};
+    const ciat2: Record<string, number> = {};
+    subjects.forEach(s => {
+      ciat1[s.id] = Math.floor(Math.random() * 41) + 55;
+      ciat2[s.id] = Math.floor(Math.random() * 41) + 55;
+      marks[s.id] = Math.round((ciat1[s.id] + ciat2[s.id]) / 2);
+    });
     return {
       id: `stu-${startIdx + i}`,
       name: studentNames[(startIdx + i) % studentNames.length],
       rollNo: `CS${String(startIdx + i + 1).padStart(3, "0")}`,
       email: `student${startIdx + i + 1}@college.edu`,
-      marks,
+      marks, ciat1, ciat2,
     };
   });
 }

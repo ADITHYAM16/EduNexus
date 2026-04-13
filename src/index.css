@@ -150,7 +150,7 @@
   button:not(:disabled):not([data-state]):hover, .btn:not(:disabled):hover {
     transform: scale(1.04) !important;
   }
-  button[data-state]:hover {
+  [data-state]:hover {
     transform: none !important;
   }
   li, .menu-item, a {
@@ -172,15 +172,13 @@
   }
 
   /* BUTTONS */
-  button.bg-primary, .btn.bg-primary, .bg-gradient-primary {
+  .bg-gradient-primary {
     background: linear-gradient(135deg, #8B5CF6, #7C3AED) !important;
     color: #ffffff !important;
-    background-image: linear-gradient(135deg, #8B5CF6, #7C3AED) !important;
     box-shadow: 0 4px 15px rgba(124, 58, 237, 0.25) !important;
   }
-  button.bg-primary:hover, .btn.bg-primary:hover, .bg-gradient-primary:hover {
+  .bg-gradient-primary:hover {
     background: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
-    background-image: linear-gradient(135deg, #7C3AED, #6D28D9) !important;
   }
 
   /* NAVBAR / HEADER */
@@ -222,14 +220,12 @@
     box-shadow: 0 0 0 1px #6366F1, 0 10px 25px rgba(99,102,241,0.2) !important;
   }
 
-  .dark button.bg-primary, .dark .btn.bg-primary, .dark .bg-gradient-primary {
+  .dark .bg-gradient-primary {
     background: #6366F1 !important;
-    background-image: none !important;
     box-shadow: none !important;
   }
-  .dark button.bg-primary:hover, .dark .btn.bg-primary:hover, .dark .bg-gradient-primary:hover {
+  .dark .bg-gradient-primary:hover {
     background: #4F46E5 !important;
-    background-image: none !important;
   }
 
   .dark header, .dark nav, .dark aside.bg-card {

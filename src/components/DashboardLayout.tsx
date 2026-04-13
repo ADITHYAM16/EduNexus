@@ -110,49 +110,49 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   return (
     <div className="flex min-h-screen h-screen overflow-hidden">
-      {/* Desktop Sidebar */}
-      {!isMobile && (
-        <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col shrink-0">
-          <SidebarContent links={links} location={location} user={user} logout={logout} />
-        </aside>
-      )}
+      {/* Desktop Sidebar — hidden on mobile */}
+      <aside className="hidden md:flex w-64 bg-sidebar text-sidebar-foreground flex-col shrink-0">
+        <SidebarContent links={links} location={location} user={user} logout={logout} />
+      </aside>
 
-      {/* Mobile Sidebar */}
-      {isMobile && (
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
-            <SheetTitle className="sr-only">Navigation</SheetTitle>
-            <SidebarContent links={links} location={location} user={user} logout={logout} onNavigate={() => setOpen(false)} />
-          </SheetContent>
-        </Sheet>
-      )}
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarContent links={links} location={location} user={user} logout={logout} onNavigate={() => setOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <header className={`flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0 ${!isMobile ? '' : ''}`}>
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        {/* Header — always visible */}
+        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
           <div className="flex items-center gap-3">
-            {isMobile && (
-              <button onClick={() => setOpen(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                <Menu className="w-5 h-5 text-foreground" />
-              </button>
-            )}
-            {isMobile && (
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md overflow-hidden bg-white flex items-center justify-center">
-                  <img src="/logo.png" alt="EduNexus" className="w-full h-full object-contain" />
-                </div>
-                <span className="text-sm font-bold text-foreground font-cinzel">EduNexus</span>
-              </div>
-            )}
-            {!isMobile && <h2 className="text-sm font-medium text-muted-foreground">{location.pathname.split("/").pop()?.replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase()) || "Dashboard"}</h2>}
+            {/* Hamburger — only on mobile */}
+            <button
+              onClick={() => setOpen(true)}
+              className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5 text-foreground" />
+            </button>
+            {/* Logo + name — only on mobile */}
+            <div className="md:hidden flex items-center gap-2">
+              <img src="/logo.png" alt="EduNexus" className="w-7 h-7 object-contain" style={{ mixBlendMode: "multiply" }} />
+              <span className="text-sm font-bold text-foreground font-cinzel">EduNexus</span>
+            </div>
+            {/* Page title — only on desktop */}
+            <h2 className="hidden md:block text-sm font-medium text-muted-foreground">
+              {location.pathname.split("/").pop()?.replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase()) || "Dashboard"}
+            </h2>
           </div>
+          {/* Dark/Light toggle — always visible */}
           <button
             onClick={() => setDark(!dark)}
             className="p-2 rounded-lg hover:bg-muted transition-colors"
             aria-label="Toggle dark mode"
           >
-            {dark ? <Sun className="w-4.5 h-4.5 text-warning" /> : <Moon className="w-4.5 h-4.5 text-muted-foreground" />}
+            {dark ? <Sun className="w-5 h-5 text-warning" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
           </button>
         </header>
 

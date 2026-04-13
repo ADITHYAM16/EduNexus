@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import EduNexusLogo from "@/components/EduNexusLogo";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 const staffLinks = [
   { to: "/staff", label: "Dashboard", icon: LayoutDashboard },
@@ -36,7 +35,7 @@ const SidebarContent: React.FC<{
   logout: () => void;
   onNavigate?: () => void;
 }> = ({ links, location, user, logout, onNavigate }) => (
-  <>
+  <div className="flex flex-col h-full">
       <div className="p-5 border-b border-sidebar-border">
       <div className="flex items-center gap-3">
         <img src="/logo.png" alt="EduNexus" className="w-14 h-14 object-contain" style={{ mixBlendMode: "multiply" }} />
@@ -92,22 +91,26 @@ const SidebarContent: React.FC<{
         Sign Out
       </button>
     </div>
-  </>
+  </div>
 );
 
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const isDark = saved ? saved === "dark" : prefersDark;
+    document.documentElement.classList.toggle("dark", isDark);
+    return isDark;
+  });
   const links = user?.role === "ROLE_HOD" ? hodLinks : staffLinks;
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
-
   return (
     <div className="flex min-h-screen h-screen overflow-hidden">
       {/* Desktop Sidebar — hidden on mobile */}
@@ -117,9 +120,11 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground flex flex-col">
+        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground flex flex-col h-full overflow-hidden">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <SidebarContent links={links} location={location} user={user} logout={logout} onNavigate={() => setOpen(false)} />
+          <div className="flex flex-col h-full overflow-y-auto">
+            <SidebarContent links={links} location={location} user={user} logout={logout} onNavigate={() => setOpen(false)} />
+          </div>
         </SheetContent>
       </Sheet>
 

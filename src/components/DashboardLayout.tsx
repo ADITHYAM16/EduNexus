@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard, CalendarCheck, BookOpen, MessageSquare, Brain,
-  Users, BarChart3, LogOut, Menu, Moon, Sun, Building2, ClipboardList
+  Users, BarChart3, LogOut, Menu, Moon, Sun, Building2
 } from "lucide-react";
 import EduNexusLogo from "@/components/EduNexusLogo";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -12,8 +12,7 @@ const staffLinks = [
   { to: "/staff", label: "Dashboard", icon: LayoutDashboard },
   { to: "/staff/attendance", label: "Attendance", icon: CalendarCheck },
   { to: "/staff/messages", label: "Messages", icon: MessageSquare },
-  { to: "/staff/progress", label: "Student Academic Progress", icon: BookOpen },
-  { to: "/staff/academic", label: "Syllabus Progress", icon: ClipboardList },
+  { to: "/staff/academic", label: "Syllabus Progress", icon: BookOpen },
   { to: "/staff/insights", label: "AI Insights", icon: Brain },
 ];
 
@@ -23,7 +22,6 @@ const hodLinks = [
   { to: "/hod/staff", label: "Staff Management", icon: Users },
   { to: "/hod/attendance", label: "Attendance Monitor", icon: CalendarCheck },
   { to: "/hod/progress", label: "Syllabus Progress", icon: BookOpen },
-  { to: "/hod/academic", label: "Student Academic Progress", icon: ClipboardList },
   { to: "/hod/communication", label: "Communication", icon: MessageSquare },
   { to: "/hod/analytics", label: "Analytics & AI", icon: BarChart3 },
 ];
@@ -48,7 +46,7 @@ const SidebarContent: React.FC<{
       </div>
     </div>
 
-    <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+    <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto min-h-0">
       {links.map((link) => {
         const isActive = location.pathname === link.to;
         return (
@@ -120,41 +118,39 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
       {/* Mobile Sidebar Sheet */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground flex flex-col h-full overflow-hidden">
+        <SheetContent side="left" className="w-72 p-0 bg-sidebar text-sidebar-foreground flex flex-col h-full overflow-hidden">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <div className="flex flex-col h-full overflow-y-auto">
-            <SidebarContent links={links} location={location} user={user} logout={logout} onNavigate={() => setOpen(false)} />
-          </div>
+          <SidebarContent links={links} location={location} user={user} logout={logout} onNavigate={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header — always visible */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="flex items-center justify-between px-4 py-3 border rounded-xl mx-2 my-2 bg-card shrink-0 overflow-hidden border-purple-500 dark:border-blue-500">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Hamburger — only on mobile */}
             <button
               onClick={() => setOpen(true)}
-              className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+              className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors shrink-0"
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5 text-foreground" />
             </button>
             {/* Logo + name — only on mobile */}
-            <div className="md:hidden flex items-center gap-2">
-              <img src="/logo.png" alt="EduNexus" className="w-7 h-7 object-contain" style={{ mixBlendMode: "multiply" }} />
-              <span className="text-sm font-bold text-foreground font-cinzel">EduNexus</span>
+            <div className="md:hidden flex items-center gap-2 min-w-0">
+              <img src="/logo.png" alt="EduNexus" className="w-7 h-7 object-contain shrink-0" style={{ mixBlendMode: "multiply" }} />
+              <span className="text-sm font-bold text-foreground font-cinzel truncate">EduNexus</span>
             </div>
             {/* Page title — only on desktop */}
-            <h2 className="hidden md:block text-sm font-medium text-muted-foreground">
+            <h2 className="hidden md:block text-sm font-medium text-muted-foreground truncate">
               {location.pathname.split("/").pop()?.replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase()) || "Dashboard"}
             </h2>
           </div>
           {/* Dark/Light toggle — always visible */}
           <button
             onClick={() => setDark(!dark)}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0 ml-2"
             aria-label="Toggle dark mode"
           >
             {dark ? <Sun className="w-5 h-5 text-warning" /> : <Moon className="w-5 h-5 text-muted-foreground" />}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff, UserPlus, LogIn, ShieldCheck, Info, ArrowLeft } from "lucide-react";
 
 type Tab = "login" | "signup" | "admin";
@@ -107,7 +108,7 @@ const LoginPage: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError(""); setSignupSuccess("");
-    if (signupEmail.trim().toLowerCase() === "hod@mahendra.info") {
+    if (signupEmail.trim().toLowerCase() === "hod@edunexus.com") {
       setSignupError("Admin account cannot be registered here. Use Admin Login.");
       return;
     }
@@ -127,13 +128,15 @@ const LoginPage: React.FC = () => {
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdminError(""); setAdminLoading(true);
-    if (adminEmail.trim().toLowerCase() !== "hod@mahendra.info") {
-      setAdminError("Only hod@mahendra.info is allowed for admin access.");
-      setAdminLoading(false);
-      return;
-    }
     const result = await login(adminEmail, adminPwd);
     if (result.success) {
+      const saved = sessionStorage.getItem("portal_user");
+      const u = saved ? JSON.parse(saved) : null;
+      if (u?.role !== "ROLE_HOD") {
+        setAdminError("This account does not have admin access.");
+        setAdminLoading(false);
+        return;
+      }
       navigate("/hod");
     } else {
       setAdminError(result.error || "Admin login failed.");
@@ -145,21 +148,9 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setForgotEmailError(""); setForgotEmailLoading(true);
     const email = forgotEmail.trim().toLowerCase();
-    if (!email.endsWith("@mahendra.info")) {
-      setForgotEmailError("Only @mahendra.info email addresses are allowed.");
-      setForgotEmailLoading(false);
-      return;
-    }
-    try {
-      const raw = localStorage.getItem("portal_registered_users");
-      const users = raw ? JSON.parse(raw) : {};
-      if (!users[email]) {
-        setForgotEmailError("No account found with this email.");
-        setForgotEmailLoading(false);
-        return;
-      }
-    } catch {
-      setForgotEmailError("Something went wrong. Try again.");
+    const { data } = await supabase.from("staff").select("id").eq("email", email).single();
+    if (!data) {
+      setForgotEmailError("No account found with this email.");
       setForgotEmailLoading(false);
       return;
     }
@@ -228,7 +219,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                   <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required
-                    placeholder="you@mahendra.info" className={inputCls} />
+                    placeholder="you@edunexus.com" className={inputCls} />
                 </div>
                 {forgotEmailError && <ErrBox msg={forgotEmailError} />}
                 <button type="submit" disabled={forgotEmailLoading} className={btnCls} style={gradientStyle}>
@@ -330,7 +321,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                   <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required
-                    placeholder="you@mahendra.info" className={inputCls} />
+                    placeholder="you@edunexus.com" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
@@ -364,7 +355,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                   <input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required
-                    placeholder="you@mahendra.info" className={inputCls} />
+                    placeholder="you@edunexus.com" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
@@ -392,7 +383,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Admin Email</label>
                   <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} required
-                    placeholder="hod@mahendra.info" className={inputCls} />
+                    placeholder="hod@edunexus.com" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
@@ -403,7 +394,7 @@ const LoginPage: React.FC = () => {
                   {adminLoading ? "Signing in…" : "Admin Sign In"}
                 </button>
                 <div className="flex justify-end pt-1">
-                  <button type="button" onClick={() => { setForgotEmail("hod@mahendra.info"); setForgotEmailError(""); setView("forgot-email"); }}
+                  <button type="button" onClick={() => { setForgotEmail("hod@edunexus.com"); setForgotEmailError(""); setView("forgot-email"); }}
                     className="text-xs font-medium hover:underline" style={{ color: "#1d4ed8" }}>
                     Forgot password?
                   </button>

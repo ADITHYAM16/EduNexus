@@ -41,7 +41,7 @@
     --info: 262 83% 58%;
     --info-foreground: 0 0% 100%;
     
-    --border: 250 85% 92%;
+    --border: 262 83% 58%;
     --input: 250 85% 92%;
     --ring: 262 83% 58%;
     
@@ -88,7 +88,7 @@
     --warning-foreground: 0 0% 100%;
     --info: 239 84% 67%;
     --info-foreground: 0 0% 100%;
-    --border: 215 25% 23%; 
+    --border: 239 84% 67%;
     --input: 215 25% 23%;
     --ring: 239 84% 67%;
     --radius: 14px;
@@ -161,7 +161,7 @@
   /* CARDS */
   .bg-card, .shadow-card, [class*="bg-card"] {
     background-color: #FFFFFF !important;
-    border: 1px solid #DDD6FE !important;
+    border: 1px solid #8B5CF6 !important;
     border-radius: 14px !important;
     box-shadow: 0 8px 30px rgba(124, 58, 237, 0.03) !important;
     transition: all 0.3s ease !important;
@@ -184,8 +184,10 @@
   /* NAVBAR / HEADER */
   header, nav, aside.bg-card {
     background-color: #FFFFFF !important;
-    border-bottom: 1px solid #DDD6FE !important;
     box-shadow: none !important;
+  }
+  header {
+    border: 1px solid #8B5CF6 !important;
   }
   aside.bg-card {
     border-bottom: none !important;
@@ -194,7 +196,9 @@
   header:hover, nav:hover, aside:hover {
     transform: none !important;
     box-shadow: none !important;
-    border-color: #DDD6FE !important;
+  }
+  header:hover {
+    border-color: #8B5CF6 !important;
   }
 
   /* ICONS */
@@ -212,7 +216,7 @@
   /* ---------------- DARK MODE ---------------- */
   .dark .bg-card, .dark .shadow-card, .dark [class*="bg-card"] {
     background-color: #1E293B !important;
-    border: 1px solid rgba(148,163,184,0.2) !important;
+    border: 1px solid #3B82F6 !important;
     box-shadow: 0 8px 20px rgba(0,0,0,0.25) !important;
   }
   .dark .bg-card:hover, .dark .shadow-card:hover, .dark [class*="bg-card"]:hover {
@@ -230,13 +234,19 @@
 
   .dark header, .dark nav, .dark aside.bg-card {
     background-color: #0F172A !important;
-    border-bottom: 1px solid rgba(148,163,184,0.15) !important;
+  }
+  .dark header {
+    border: 1px solid #3B82F6 !important;
   }
   .dark aside.bg-card {
     border-right: 1px solid rgba(148,163,184,0.15) !important;
   }
   .dark header:hover, .dark nav:hover, .dark aside:hover {
-    border-color: rgba(148,163,184,0.15) !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .dark header:hover {
+    border-color: #3B82F6 !important;
   }
 
   .dark svg.lucide:not([class*="text-"]) {

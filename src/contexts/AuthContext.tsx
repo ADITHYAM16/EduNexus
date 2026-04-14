@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 
 export type UserRole = "ROLE_HOD" | "ROLE_ASST_PROF" | "ROLE_STAFF";
 
@@ -8,10 +9,7 @@ export interface User {
   email: string;
   role: UserRole;
   department: string;
-}
-
-interface StoredUser extends User {
-  password: string;
+  subject?: string;
 }
 
 interface AuthContextType {
@@ -26,21 +24,7 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
-
-const USERS_KEY = "portal_registered_users";
 const SESSION_KEY = "portal_user";
-const HOD_EMAIL = "hod@mahendra.info";
-
-const getStoredUsers = (): Record<string, StoredUser> => {
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-};
-
-const saveStoredUsers = (users: Record<string, StoredUser>) => {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
@@ -50,37 +34,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch { return null; }
   });
 
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const { data, error } = await supabase
+      .from("staff")
+      .select("id, name, email, role, department, subject, password_hash")
+      .eq("email", trimmedEmail)
+      .single();
+
+    if (error || !data) return { success: false, error: "No account found with this email." };
+    if (data.password_hash !== password) return { success: false, error: "Incorrect password. Please try again." };
+
+    const userData: User = {
+      id: data.id,
+      name: data.name,
+      email: data.email,
+      role: data.role as UserRole,
+      department: data.department,
+      subject: data.subject,
+    };
+    setUser(userData);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+    return { success: true };
+  }, []);
+
   const signup = useCallback(async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = name.trim();
     if (!trimmedName) return { success: false, error: "Full name is required." };
-    if (!trimmedEmail.endsWith("@mahendra.info")) return { success: false, error: "Only @mahendra.info email addresses are allowed." };
     if (password.length < 6) return { success: false, error: "Password must be at least 6 characters." };
-    const users = getStoredUsers();
-    if (users[trimmedEmail]) return { success: false, error: "An account with this email already exists." };
-    const newUser: StoredUser = {
-      id: `user-${Date.now()}`,
+
+    // Check if email already exists
+    const { data: existing } = await supabase
+      .from("staff")
+      .select("id")
+      .eq("email", trimmedEmail)
+      .single();
+
+    if (existing) return { success: false, error: "An account with this email already exists." };
+
+    const { error } = await supabase.from("staff").insert({
       name: trimmedName,
       email: trimmedEmail,
-      role: trimmedEmail === HOD_EMAIL ? "ROLE_HOD" : "ROLE_STAFF",
-      department: "Artificial Intelligence & Data Science",
-      password,
-    };
-    users[trimmedEmail] = newUser;
-    saveStoredUsers(users);
-    return { success: true };
-  }, []);
+      password_hash: password,
+      role: "ROLE_STAFF",
+      department: "Computer Science",
+    });
 
-  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail.endsWith("@mahendra.info")) return { success: false, error: "Only @mahendra.info email addresses are allowed." };
-    const users = getStoredUsers();
-    const found = users[trimmedEmail];
-    if (!found) return { success: false, error: "No account found. Please sign up first." };
-    if (found.password !== password) return { success: false, error: "Incorrect password. Please try again." };
-    const { password: _, ...userData } = found;
-    setUser(userData);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+    if (error) return { success: false, error: error.message };
     return { success: true };
   }, []);
 
@@ -100,12 +101,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = useCallback(async (email: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
     const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail.endsWith("@mahendra.info")) return { success: false, error: "Only @mahendra.info email addresses are allowed." };
     if (newPassword.length < 6) return { success: false, error: "Password must be at least 6 characters." };
-    const users = getStoredUsers();
-    if (!users[trimmedEmail]) return { success: false, error: "No account found with this email." };
-    users[trimmedEmail] = { ...users[trimmedEmail], password: newPassword };
-    saveStoredUsers(users);
+
+    const { error } = await supabase
+      .from("staff")
+      .update({ password_hash: newPassword })
+      .eq("email", trimmedEmail);
+
+    if (error) return { success: false, error: error.message };
     return { success: true };
   }, []);
 

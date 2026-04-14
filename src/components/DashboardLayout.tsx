@@ -111,7 +111,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
   return (
-    <div className="flex min-h-screen h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden">
       {/* Desktop Sidebar — hidden on mobile */}
       <aside className="hidden md:flex w-64 bg-sidebar text-sidebar-foreground flex-col shrink-0">
         <SidebarContent links={links} location={location} user={user} logout={logout} />
@@ -158,8 +158,8 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto overscroll-contain">
-          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl">{children}</div>
+        <main className="flex-1 overflow-y-auto overscroll-y-contain scroll-touch">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl pb-10">{children}</div>
         </main>
       </div>
     </div>

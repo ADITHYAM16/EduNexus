@@ -1,391 +1,259 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { useCollege } from "@/contexts/CollegeContext";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Users, GraduationCap, Pencil, Check, X, Trash2 } from "lucide-react";
+import { BookOpen, GraduationCap, Pencil, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Student } from "@/data/collegeData";
 
-const getStatus = (avg: number) =>
-  avg >= 80 ? "Excellent" : avg >= 60 ? "Average" : "At Risk";
+interface Subject { id: string; name: string; code: string; assigned_staff_name: string; section_id: string; }
+interface Section { id: string; name: string; year_id: string; }
+interface Year { id: string; name: string; department_id: string; }
+interface Department { id: string; name: string; }
+interface UnitProgress { unit_number: number; topics_completed: number; topics_total: number; }
 
-const statusVariant = (avg: number): "default" | "secondary" | "destructive" =>
-  avg >= 80 ? "default" : avg >= 60 ? "secondary" : "destructive";
+const UNITS = [1, 2, 3, 4, 5];
 
-const clamp = (v: number) => Math.min(100, Math.max(0, v));
-
-// ── inline editable cell — click text to edit ────────────────────────────────
-const EditableCell: React.FC<{
-  value: string;
-  onSave: (v: string) => void;
-  mono?: boolean;
-}> = ({ value, onSave, mono }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
-
-  const save = () => { onSave(draft.trim() || value); setEditing(false); };
-  const cancel = () => { setDraft(value); setEditing(false); };
-
-  if (editing) {
-    return (
-      <div className="flex items-center gap-1 min-w-[100px]">
-        <Input
-          ref={inputRef}
-          value={draft}
-          onChange={e => setDraft(e.target.value)}
-          className="h-7 text-xs px-2"
-          onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") cancel(); }}
-        />
-        <button onClick={save} className="p-1 rounded hover:bg-success/10 text-success"><Check className="w-3.5 h-3.5" /></button>
-        <button onClick={cancel} className="p-1 rounded hover:bg-destructive/10 text-destructive"><X className="w-3.5 h-3.5" /></button>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => { setDraft(value); setEditing(true); }}
-      className={`flex items-center gap-1.5 group text-left w-full rounded px-1 -mx-1 hover:bg-muted/60 transition-colors ${mono ? "font-mono text-xs" : "text-sm font-medium"}`}
-      title="Click to edit"
-    >
-      <span>{value}</span>
-      <Pencil className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-    </button>
-  );
-};
-
-// ── marks edit dialog ────────────────────────────────────────────────────────
-const MarksDialog: React.FC<{
-  open: boolean;
-  onClose: () => void;
-  student: Student;
-  subjectId: string;
-  subjectName: string;
-  deptId: string;
-  yearId: string;
-  sectionId: string;
-}> = ({ open, onClose, student, subjectId, subjectName, deptId, yearId, sectionId }) => {
-  const { updateStudentCiat } = useCollege();
-  const [c1, setC1] = useState(String(student.ciat1?.[subjectId] ?? 0));
-  const [c2, setC2] = useState(String(student.ciat2?.[subjectId] ?? 0));
-
-  const c1n = clamp(parseInt(c1) || 0);
-  const c2n = clamp(parseInt(c2) || 0);
-  const avg = Math.round((c1n + c2n) / 2);
-
-  const handleSave = () => {
-    updateStudentCiat(deptId, yearId, sectionId, student.id, subjectId, c1n, c2n);
-    toast({ title: "Marks Updated", description: `${student.name} — ${subjectName}: Avg ${avg}% (${getStatus(avg)})` });
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="text-base">Edit Marks — {student.name}</DialogTitle>
-          <p className="text-xs text-muted-foreground">{subjectName}</p>
-        </DialogHeader>
-        <div className="space-y-4 pt-1">
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-blue-600">CIAT 1 (0 – 100)</Label>
-            <Input type="number" min={0} max={100} value={c1} onChange={e => setC1(e.target.value)} className="border-blue-200 focus:border-blue-400" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-green-600">CIAT 2 (0 – 100)</Label>
-            <Input type="number" min={0} max={100} value={c2} onChange={e => setC2(e.target.value)} className="border-green-200 focus:border-green-400" />
-          </div>
-          <div className="rounded-lg border border-border bg-muted/40 p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground font-medium">Average</span>
-              <span className="text-lg font-bold text-foreground">{avg}%</span>
-            </div>
-            <Progress value={avg} className="h-2" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Status</span>
-              <Badge variant={statusVariant(avg)} className="text-xs">{getStatus(avg)}</Badge>
-            </div>
-          </div>
-          <div className="flex gap-2 pt-1">
-            <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-            <Button className="flex-1" onClick={handleSave}>Save Marks</Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-// ── main page ────────────────────────────────────────────────────────────────
 const StaffProgress: React.FC = () => {
   const { user } = useAuth();
-  const { getStaffAssignments, departments, updateStudent, deleteStudent } = useCollege();
-  const assignments = getStaffAssignments(user?.id || "");
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [sections, setSections] = useState<Section[]>([]);
+  const [years, setYears] = useState<Year[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [unitProgress, setUnitProgress] = useState<Record<string, UnitProgress[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSubject, setEditSubject] = useState<Subject | null>(null);
+  const [editUnits, setEditUnits] = useState<UnitProgress[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  const [selectedIdx, setSelectedIdx] = useState("0");
-  const [marksDialog, setMarksDialog] = useState<{ student: Student } | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<Student | null>(null);
+  const fetchData = useCallback(async () => {
+    if (!user?.name) return;
+    setLoading(true);
 
-  const assignment = assignments[parseInt(selectedIdx)] || null;
+    const [{ data: depts }, { data: yrs }, { data: secs }, { data: subs }] = await Promise.all([
+      supabase.from("departments").select("id,name"),
+      supabase.from("years").select("id,name,department_id"),
+      supabase.from("sections").select("id,name,year_id"),
+      supabase.from("subjects").select("id,name,code,assigned_staff_name,section_id")
+        .eq("assigned_staff_name", user.name),
+    ]);
 
-  const section = assignment
-    ? departments
-        .find(d => d.id === assignment.dept.id)
-        ?.years.find(y => y.id === assignment.year.id)
-        ?.sections.find(s => s.id === assignment.section.id)
-    : null;
+    setDepartments(depts || []);
+    setYears(yrs || []);
+    setSections(secs || []);
+    setSubjects(subs || []);
 
-  if (assignments.length === 0) {
-    return (
-      <DashboardLayout>
-        <h1 className="text-2xl font-bold text-foreground mb-1">Student Academic Progress</h1>
-        <p className="text-sm text-muted-foreground mb-6">Track student performance for your assigned subjects</p>
-        <Card className="shadow-card">
-          <CardContent className="py-16 text-center">
-            <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No subjects assigned to you yet.</p>
-          </CardContent>
-        </Card>
-      </DashboardLayout>
-    );
-  }
+    if (subs && subs.length > 0) {
+      const { data: progress } = await supabase
+        .from("syllabus_progress")
+        .select("subject_id,unit_number,topics_completed,topics_total")
+        .in("subject_id", subs.map(s => s.id));
 
-  const overallStats = assignments.reduce(
-    (acc, a) => {
-      const sec = departments
-        .find(d => d.id === a.dept.id)
-        ?.years.find(y => y.id === a.year.id)
-        ?.sections.find(s => s.id === a.section.id);
-      if (sec) {
-        acc.totalStudents += sec.students.length;
-        sec.students.forEach(stu => {
-          const mark = stu.marks[a.subject.id] || 0;
-          acc.totalMarks += mark;
-          acc.markCount++;
-          if (mark >= 60) acc.passing++;
+      const map: Record<string, UnitProgress[]> = {};
+      subs.forEach(sub => {
+        map[sub.id] = UNITS.map(u => {
+          const found = progress?.find(r => r.subject_id === sub.id && r.unit_number === u);
+          return { unit_number: u, topics_completed: found?.topics_completed ?? 0, topics_total: found?.topics_total ?? 10 };
         });
-      }
-      return acc;
-    },
-    { totalStudents: 0, totalMarks: 0, markCount: 0, passing: 0 }
-  );
-  const overallAvg = overallStats.markCount > 0
-    ? Math.round(overallStats.totalMarks / overallStats.markCount) : 0;
+      });
+      setUnitProgress(map);
+    }
+    setLoading(false);
+  }, [user?.name]);
 
-  const sectionStudents = section?.students || [];
-  const subjectAvgs = sectionStudents.map(s => {
-    const c1 = s.ciat1?.[assignment!.subject.id] ?? s.marks[assignment!.subject.id] ?? 0;
-    const c2 = s.ciat2?.[assignment!.subject.id] ?? s.marks[assignment!.subject.id] ?? 0;
-    return Math.round((c1 + c2) / 2);
-  });
-  const sectionAvg = subjectAvgs.length > 0
-    ? Math.round(subjectAvgs.reduce((a, b) => a + b, 0) / subjectAvgs.length) : 0;
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleDelete = (stu: Student) => {
-    deleteStudent(assignment!.dept.id, assignment!.year.id, assignment!.section.id, stu.id);
-    toast({ title: "Student Removed", description: `${stu.name} (${stu.rollNo}) has been deleted.`, variant: "destructive" });
-    setDeleteConfirm(null);
+  const getCompletion = (subjectId: string) => {
+    const units = unitProgress[subjectId];
+    if (!units) return 0;
+    const total = units.reduce((a, u) => a + u.topics_total, 0);
+    const done = units.reduce((a, u) => a + u.topics_completed, 0);
+    return total > 0 ? Math.round((done / total) * 100) : 0;
   };
+
+  const getSubjectLocation = (subject: Subject) => {
+    const section = sections.find(s => s.id === subject.section_id);
+    const year = years.find(y => y.id === section?.year_id);
+    const dept = departments.find(d => d.id === year?.department_id);
+    return `${dept?.name || ""} • ${year?.name || ""} • Section ${section?.name || ""}`;
+  };
+
+  const openEdit = (subject: Subject) => {
+    setEditSubject(subject);
+    setEditUnits(unitProgress[subject.id] || UNITS.map(u => ({ unit_number: u, topics_completed: 0, topics_total: 10 })));
+    setEditOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!editSubject || !user?.id) return;
+    setSaving(true);
+    const upserts = editUnits.map(u => ({
+      subject_id: editSubject.id,
+      staff_id: user.id,
+      unit_number: u.unit_number,
+      topics_completed: Math.min(u.topics_completed, u.topics_total),
+      topics_total: u.topics_total,
+      updated_at: new Date().toISOString(),
+    }));
+
+    const { error } = await supabase.from("syllabus_progress").upsert(upserts, { onConflict: "subject_id,unit_number" });
+    setSaving(false);
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Progress Updated", description: `${editSubject.name} syllabus progress saved.` });
+    setEditOpen(false);
+    fetchData();
+  };
+
+  const overallAvg = subjects.length > 0
+    ? Math.round(subjects.reduce((a, s) => a + getCompletion(s.id), 0) / subjects.length)
+    : 0;
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold text-foreground mb-1">Student Academic Progress</h1>
-      <p className="text-sm text-muted-foreground mb-6">Track and edit student performance for your assigned subjects</p>
+      <h1 className="text-2xl font-bold text-foreground mb-1">Syllabus Progress</h1>
+      <p className="text-sm text-muted-foreground mb-6">Update and track your subject syllabus completion</p>
 
-      <div className="mb-6">
-        <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Select Assignment</label>
-        <Select value={selectedIdx} onValueChange={setSelectedIdx}>
-          <SelectTrigger className="max-w-lg"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {assignments.map((a, i) => (
-              <SelectItem key={i} value={String(i)}>
-                {a.dept.name} → {a.year.name} → Sec {a.section.name} → {a.subject.code} - {a.subject.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {assignment && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <Card className="shadow-card">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">{assignment.subject.name}</p>
-                <p className="text-xs text-muted-foreground">{assignment.dept.name} • {assignment.year.name} • Sec {assignment.section.name}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-card">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{sectionStudents.length}</p>
-                <p className="text-xs text-muted-foreground">
-                  {subjectAvgs.filter(a => a >= 60).length} passing · {subjectAvgs.filter(a => a < 60).length} at risk
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="shadow-card">
-            <CardContent className="flex items-center gap-3 p-4">
-              <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{sectionAvg}%</p>
-                <p className="text-xs text-muted-foreground">Section Average</p>
-              </div>
-            </CardContent>
-          </Card>
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-7 h-7 animate-spin text-primary" />
         </div>
-      )}
-
-      {section && assignment && (
+      ) : subjects.length === 0 ? (
         <Card className="shadow-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">
-              Student Performance — {assignment.subject.name}
-              <span className="text-xs font-normal text-muted-foreground ml-2">
-                (click name/roll to edit)
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-xs">Roll No</TableHead>
-                    <TableHead className="text-xs">Name</TableHead>
-                    <TableHead className="text-center text-xs bg-blue-50 dark:bg-blue-950/30">CIAT 1</TableHead>
-                    <TableHead className="text-center text-xs bg-green-50 dark:bg-green-950/30">CIAT 2</TableHead>
-                    <TableHead className="text-center text-xs">Average</TableHead>
-                    <TableHead className="text-center text-xs">Progress</TableHead>
-                    <TableHead className="text-center text-xs">Status</TableHead>
-                    <TableHead className="text-center text-xs">Edit Marks</TableHead>
-                    <TableHead className="text-center text-xs">Delete</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sectionStudents.map(stu => {
-                    const c1 = stu.ciat1?.[assignment.subject.id] ?? stu.marks[assignment.subject.id] ?? 0;
-                    const c2 = stu.ciat2?.[assignment.subject.id] ?? stu.marks[assignment.subject.id] ?? 0;
-                    const avg = Math.round((c1 + c2) / 2);
-                    return (
-                      <TableRow key={stu.id} className="hover:bg-muted/30 transition-colors">
-                        <TableCell>
-                          <EditableCell
-                            mono
-                            value={stu.rollNo}
-                            onSave={v => {
-                              updateStudent(assignment.dept.id, assignment.year.id, assignment.section.id, stu.id, { rollNo: v });
-                              toast({ title: "Roll No Updated", description: `${stu.name} → ${v}` });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <EditableCell
-                            value={stu.name}
-                            onSave={v => {
-                              updateStudent(assignment.dept.id, assignment.year.id, assignment.section.id, stu.id, { name: v });
-                              toast({ title: "Name Updated", description: v });
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell className="text-center bg-blue-50/50 dark:bg-blue-950/20">
-                          <span className={`text-sm font-semibold ${c1 >= 80 ? "text-blue-700" : c1 >= 60 ? "text-blue-500" : "text-destructive"}`}>{c1}</span>
-                        </TableCell>
-                        <TableCell className="text-center bg-green-50/50 dark:bg-green-950/20">
-                          <span className={`text-sm font-semibold ${c2 >= 80 ? "text-green-700" : c2 >= 60 ? "text-green-500" : "text-destructive"}`}>{c2}</span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className="text-sm font-bold text-foreground">{avg}%</span>
-                        </TableCell>
-                        <TableCell className="w-28">
-                          <Progress value={avg} className="h-2" />
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant={statusVariant(avg)} className="text-xs">{getStatus(avg)}</Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            size="sm" variant="outline"
-                            className="h-7 px-2 gap-1 text-xs hover:border-primary/40 hover:bg-primary/5"
-                            onClick={() => setMarksDialog({ student: stu })}
-                          >
-                            <Pencil className="w-3 h-3" /> Edit
-                          </Button>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            size="sm" variant="ghost"
-                            className="h-7 w-7 p-0 hover:bg-destructive/10 hover:text-destructive text-muted-foreground"
-                            onClick={() => setDeleteConfirm(stu)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+          <CardContent className="py-16 text-center">
+            <BookOpen className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">No subjects assigned to you yet.</p>
+            <p className="text-xs text-muted-foreground mt-1">Ask your HOD to assign subjects with your name.</p>
           </CardContent>
         </Card>
+      ) : (
+        <>
+          {/* Summary */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <Card className="shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{subjects.length}</p>
+                  <p className="text-xs text-muted-foreground">Assigned Subjects</p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-card">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                  <GraduationCap className="w-5 h-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{overallAvg}%</p>
+                  <p className="text-xs text-muted-foreground">Overall Completion</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Subject Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {subjects.map(subject => {
+              const completion = getCompletion(subject.id);
+              const units = unitProgress[subject.id] || UNITS.map(u => ({ unit_number: u, topics_completed: 0, topics_total: 10 }));
+              return (
+                <Card key={subject.id} className="shadow-card">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-sm font-bold">{subject.name}</CardTitle>
+                        <p className="text-xs text-muted-foreground mt-0.5">{subject.code}</p>
+                        <p className="text-xs text-muted-foreground">{getSubjectLocation(subject)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={completion >= 80 ? "default" : completion >= 50 ? "secondary" : "destructive"} className="text-xs">
+                          {completion}%
+                        </Badge>
+                        <Button size="sm" variant="outline" className="h-7 px-2 gap-1 text-xs" onClick={() => openEdit(subject)}>
+                          <Pencil className="w-3 h-3" /> Update
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <Progress value={completion} className="h-2 mb-3" />
+                    <div className="flex gap-2 flex-wrap">
+                      {units.map(unit => {
+                        const pct = unit.topics_total > 0 ? Math.round((unit.topics_completed / unit.topics_total) * 100) : 0;
+                        return (
+                          <div key={unit.unit_number} className="text-center">
+                            <div className={`px-3 py-1 rounded-full text-xs font-bold min-w-[60px] ${
+                              pct >= 80 ? "bg-green-100 text-green-700 border border-green-200" :
+                              pct >= 50 ? "bg-yellow-100 text-yellow-700 border border-yellow-200" :
+                              pct > 0 ? "bg-orange-100 text-orange-700 border border-orange-200" :
+                              "bg-gray-100 text-gray-500 border border-gray-200"
+                            }`}>
+                              {unit.topics_completed}/{unit.topics_total}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">U{unit.unit_number}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
       )}
 
-      {marksDialog && assignment && (
-        <MarksDialog
-          open={!!marksDialog}
-          onClose={() => setMarksDialog(null)}
-          student={marksDialog.student}
-          subjectId={assignment.subject.id}
-          subjectName={assignment.subject.name}
-          deptId={assignment.dept.id}
-          yearId={assignment.year.id}
-          sectionId={assignment.section.id}
-        />
-      )}
-
-      <AlertDialog open={!!deleteConfirm} onOpenChange={open => { if (!open) setDeleteConfirm(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Student?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove <strong>{deleteConfirm?.name}</strong> ({deleteConfirm?.rollNo}) from this section. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Edit Progress Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Update Syllabus — {editSubject?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {editUnits.map((unit, i) => (
+              <div key={unit.unit_number} className="border border-border rounded-lg p-3">
+                <p className="text-sm font-semibold text-foreground mb-2">Unit {unit.unit_number}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Topics Completed</Label>
+                    <Input type="number" min={0} max={unit.topics_total}
+                      value={unit.topics_completed}
+                      onChange={e => {
+                        const val = Math.min(parseInt(e.target.value) || 0, unit.topics_total);
+                        setEditUnits(prev => prev.map((u, idx) => idx === i ? { ...u, topics_completed: val } : u));
+                      }} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Total Topics</Label>
+                    <Input type="number" min={1} max={20}
+                      value={unit.topics_total}
+                      onChange={e => {
+                        const val = Math.max(1, parseInt(e.target.value) || 10);
+                        setEditUnits(prev => prev.map((u, idx) => idx === i ? { ...u, topics_total: val } : u));
+                      }} />
+                  </div>
+                </div>
+                <Progress value={unit.topics_total > 0 ? Math.round((unit.topics_completed / unit.topics_total) * 100) : 0} className="h-1.5 mt-2" />
+              </div>
+            ))}
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setEditOpen(false)}>Cancel</Button>
+              <Button className="flex-1" onClick={handleSave} disabled={saving}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Save Progress
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

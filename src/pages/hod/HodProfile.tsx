@@ -1,16 +1,19 @@
 import React, { useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { User, Mail, Building2, BookOpen, CalendarCheck, Award, Pencil, Camera } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   ROLE_HOD: "Head of Department",
-  ROLE_ASST_PROF: "Assistant Professor AI&DS",
+  ROLE_ASST_PROF: "Assistant Professor",
+  ROLE_STAFF: "Staff",
 };
 
 const HodProfile: React.FC = () => {
@@ -38,10 +41,12 @@ const HodProfile: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const next = { ...form };
+    await supabase.from("staff").update({ name: next.name, email: next.email, department: next.department }).eq("id", user?.id);
     setSaved(next);
     updateUser({ name: next.name, email: next.email, department: next.department, role: next.role });
+    toast({ title: "Profile Updated" });
     setEditing(false);
   };
 

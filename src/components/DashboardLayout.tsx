@@ -84,6 +84,7 @@ const SidebarContent: React.FC<{
       <button
         onClick={logout}
         className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-destructive transition-colors"
+        style={{ transform: "none" }}
       >
         <LogOut className="w-4 h-4" />
         Sign Out

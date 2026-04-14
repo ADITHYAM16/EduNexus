@@ -144,17 +144,29 @@
 
   /* UNIVERSALS */
   button, .btn {
-    transition: all 0.25s ease-in-out !important;
     border-radius: 10px !important;
   }
   button:not(:disabled):not([data-state]):hover, .btn:not(:disabled):hover {
-    transform: scale(1.04) !important;
+    transform: scale(1.04);
   }
-  [data-state]:hover {
+  [data-state]:hover,
+  [role="dialog"] button:hover,
+  aside button:hover,
+  nav button:hover,
+  .sidebar button:hover {
     transform: none !important;
   }
   li, .menu-item, a {
     transition: all 0.25s ease-in-out !important;
+  }
+
+  /* Lock all elements inside dialogs — no transform, no transition */
+  [role="dialog"],
+  [role="dialog"] *,
+  [data-radix-dialog-overlay] ~ [data-radix-dialog-content],
+  [data-radix-dialog-overlay] ~ [data-radix-dialog-content] * {
+    transform: none !important;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease !important;
   }
 
   /* ---------------- LIGHT MODE ---------------- */
@@ -169,6 +181,15 @@
   .bg-card:hover, .shadow-card:hover, [class*="bg-card"]:hover {
     border-color: #7C3AED !important;
     box-shadow: 0 0 0 1px #7C3AED, 0 10px 30px rgba(124, 58, 237, 0.15) !important;
+    transform: none !important;
+  }
+  [role="dialog"] .bg-card,
+  [role="dialog"] .bg-card:hover,
+  [role="dialog"] [class*="bg-card"],
+  [role="dialog"] [class*="bg-card"]:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   /* BUTTONS */
@@ -222,6 +243,15 @@
   .dark .bg-card:hover, .dark .shadow-card:hover, .dark [class*="bg-card"]:hover {
     border-color: #6366F1 !important;
     box-shadow: 0 0 0 1px #6366F1, 0 10px 25px rgba(99,102,241,0.2) !important;
+    transform: none !important;
+  }
+  .dark [role="dialog"] .bg-card,
+  .dark [role="dialog"] .bg-card:hover,
+  .dark [role="dialog"] [class*="bg-card"],
+  .dark [role="dialog"] [class*="bg-card"]:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   .dark .bg-gradient-primary {

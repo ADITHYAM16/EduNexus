@@ -1,16 +1,18 @@
 import React, { useState, useRef } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { User, Mail, Building2, BookOpen, CalendarCheck, Award, Pencil, Camera } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
 
 const ROLE_LABELS: Record<UserRole, string> = {
   ROLE_HOD: "Head of Department",
-  ROLE_ASST_PROF: "Assistant Professor AI&DS",
+  ROLE_ASST_PROF: "Assistant Professor",
+  ROLE_STAFF: "Staff",
 };
 
 const StaffProfile: React.FC = () => {
@@ -38,10 +40,12 @@ const StaffProfile: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const next = { ...form };
+    await supabase.from("staff").update({ name: next.name, email: next.email, department: next.department }).eq("id", user?.id);
     setSaved(next);
     updateUser({ name: next.name, email: next.email, department: next.department, role: next.role });
+    toast({ title: "Profile Updated" });
     setEditing(false);
   };
 
@@ -49,8 +53,8 @@ const StaffProfile: React.FC = () => {
     { label: "Full Name", value: saved.name, icon: User },
     { label: "Email", value: saved.email, icon: Mail },
     { label: "Department", value: saved.department, icon: Building2 },
-    { label: "Role", value: ROLE_LABELS[saved.role], icon: Award },
-    { label: "Subject", value: saved.subject, icon: BookOpen },
+    { label: "Role", value: ROLE_LABELS[saved.role] || saved.role, icon: Award },
+    { label: "Subject", value: user?.subject || saved.subject, icon: BookOpen },
     { label: "Joining Date", value: saved.joiningDate, icon: CalendarCheck },
   ];
 

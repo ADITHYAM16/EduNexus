@@ -1,68 +1,66 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { mockStaffList } from "@/data/mockData";
+import { supabase } from "@/lib/supabase";
 
-export type StaffMember = typeof mockStaffList[0];
-
-const USERS_KEY = "portal_registered_users";
-
-function getRegisteredStaff(): StaffMember[] {
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    if (!raw) return [];
-    const users: Record<string, { id: string; name: string; email: string; role: string; department: string; password: string }> = JSON.parse(raw);
-    return Object.values(users)
-      .filter(u => u.role !== "ROLE_HOD")
-      .map(u => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        subject: "",
-        attendance: 0,
-        syllabus: 0,
-        tasksCompleted: 0,
-        tasksPending: 0,
-      }));
-  } catch {
-    return [];
-  }
+export interface StaffMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  subject: string;
+  password_hash?: string;
 }
-
-export type StaffMember = typeof mockStaffList[0];
 
 interface StaffContextType {
   staffList: StaffMember[];
-  addStaff: (staff: Omit<StaffMember, "tasksCompleted" | "tasksPending" | "syllabus">) => void;
-  deleteStaff: (id: string) => void;
+  loading: boolean;
+  fetchStaff: () => Promise<void>;
+  addStaff: (staff: Omit<StaffMember, "id">) => Promise<{ success: boolean; error?: string }>;
+  updateStaff: (id: string, updates: Partial<StaffMember>) => Promise<{ success: boolean; error?: string }>;
+  deleteStaff: (id: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const StaffContext = createContext<StaffContextType | null>(null);
 
 export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [staffList, setStaffList] = useState<StaffMember[]>(() => {
-    const registered = getRegisteredStaff();
-    return registered.length > 0 ? registered : mockStaffList;
-  });
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Re-sync when localStorage changes (e.g. new signup)
-  useEffect(() => {
-    const sync = () => {
-      const registered = getRegisteredStaff();
-      if (registered.length > 0) setStaffList(registered);
-    };
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
+  const fetchStaff = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from("staff")
+      .select("id, name, email, role, department, subject")
+      .order("name");
+    setStaffList(data || []);
+    setLoading(false);
   }, []);
 
-  const addStaff = useCallback((staff: Omit<StaffMember, "tasksCompleted" | "tasksPending" | "syllabus">) => {
-    setStaffList(prev => [...prev, { ...staff, tasksCompleted: 0, tasksPending: 0, syllabus: 0 }]);
-  }, []);
+  useEffect(() => { fetchStaff(); }, [fetchStaff]);
 
-  const deleteStaff = useCallback((id: string) => {
-    setStaffList(prev => prev.filter(s => s.id !== id));
-  }, []);
+  const addStaff = useCallback(async (staff: Omit<StaffMember, "id">) => {
+    const { error } = await supabase.from("staff").insert(staff);
+    if (error) return { success: false, error: error.message };
+    await fetchStaff();
+    return { success: true };
+  }, [fetchStaff]);
+
+  const updateStaff = useCallback(async (id: string, updates: Partial<StaffMember>) => {
+    const { error } = await supabase.from("staff").update(updates).eq("id", id);
+    if (error) return { success: false, error: error.message };
+    await fetchStaff();
+    return { success: true };
+  }, [fetchStaff]);
+
+  const deleteStaff = useCallback(async (id: string) => {
+    const { error } = await supabase.from("staff").delete().eq("id", id);
+    if (error) return { success: false, error: error.message };
+    await fetchStaff();
+    return { success: true };
+  }, [fetchStaff]);
 
   return (
-    <StaffContext.Provider value={{ staffList, addStaff, deleteStaff }}>
+    <StaffContext.Provider value={{ staffList, loading, fetchStaff, addStaff, updateStaff, deleteStaff }}>
       {children}
     </StaffContext.Provider>
   );

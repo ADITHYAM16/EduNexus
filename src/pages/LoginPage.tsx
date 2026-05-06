@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useStudent } from "@/contexts/StudentContext";
@@ -41,6 +41,13 @@ const LoginPage: React.FC = () => {
   const { login, signup, resetPassword } = useAuth();
   const { setStudent } = useStudent();
   const navigate = useNavigate();
+
+  // Force light mode on login page
+  useEffect(() => {
+    const prev = document.documentElement.classList.contains("dark");
+    document.documentElement.classList.remove("dark");
+    return () => { if (prev) document.documentElement.classList.add("dark"); };
+  }, []);
 
   const [tab, setTab] = useState<Tab>("signup");
   const [view, setView] = useState<View>("main");
@@ -249,7 +256,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                   <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required
-                    placeholder="you@edunexus.com" className={inputCls} />
+                    placeholder="yourname@mahendra.info" className={inputCls} />
                 </div>
                 {forgotEmailError && <ErrBox msg={forgotEmailError} />}
                 <button type="submit" disabled={forgotEmailLoading} className={btnCls} style={gradientStyle}>
@@ -355,7 +362,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                   <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required
-                    placeholder="you@edunexus.com" className={inputCls} />
+                    placeholder="yourname@mahendra.info" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
@@ -389,7 +396,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
                   <input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required
-                    placeholder="you@edunexus.com" className={inputCls} />
+                    placeholder="yourname@mahendra.info" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
@@ -417,7 +424,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Admin Email</label>
                   <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} required
-                    placeholder="hod@edunexus.com" className={inputCls} />
+                    placeholder="yourname@mahendra.info" className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>

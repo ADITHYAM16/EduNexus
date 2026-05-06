@@ -114,9 +114,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex min-h-screen h-screen overflow-hidden bg-background">
       {/* Desktop Sidebar — hidden on mobile */}
-      <aside className="hidden md:flex w-64 bg-sidebar text-sidebar-foreground flex-col shrink-0">
+      <aside className="hidden md:flex w-64 bg-sidebar text-sidebar-foreground flex-col shrink-0 h-full overflow-y-auto">
         <SidebarContent links={links} location={location} user={user} logout={logout} />
       </aside>
 
@@ -129,9 +129,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
-        {/* Header — always visible */}
-        <header className="flex items-center justify-between px-4 py-3 border-2 rounded-xl mx-2 my-2 bg-card shrink-0 border-purple-500 dark:border-purple-400">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Header — always visible, never hidden */}
+        <header className="flex items-center justify-between px-4 py-3 border-2 rounded-xl mx-2 mt-2 mb-0 bg-card shrink-0 border-purple-500 dark:border-purple-400 z-10">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Hamburger — only on mobile */}
             <button
@@ -151,7 +151,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
               {location.pathname.split("/").pop()?.replace(/-/g, " ").replace(/^\w/, c => c.toUpperCase()) || "Dashboard"}
             </h2>
           </div>
-          {/* Dark/Light toggle — always visible */}
+          {/* Dark/Light toggle */}
           <button
             onClick={() => setDark(!dark)}
             className="p-2 rounded-lg hover:bg-muted transition-colors shrink-0 ml-2"
@@ -161,7 +161,7 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto overscroll-y-contain scroll-touch">
+        <main className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl pb-10">{children}</div>
         </main>
       </div>

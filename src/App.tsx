@@ -7,8 +7,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CollegeProvider } from "@/contexts/CollegeContext";
 import { StaffProvider } from "@/contexts/StaffContext";
 import { TodoProvider } from "@/contexts/TodoContext";
+import { StudentProvider } from "@/contexts/StudentContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
+import StudentPage from "@/pages/StudentPage";
 import StaffDashboard from "@/pages/staff/StaffDashboard";
 import StaffAttendance from "@/pages/staff/StaffAttendance";
 import StaffProgress from "@/pages/staff/StaffProgress";
@@ -16,6 +18,8 @@ import StaffMessages from "@/pages/staff/StaffMessages";
 import StaffInsights from "@/pages/staff/StaffInsights";
 import StaffProfile from "@/pages/staff/StaffProfile";
 import StaffAcademicProgress from "@/pages/staff/StaffAcademicProgress";
+import StaffWeeklyTest from "@/pages/staff/StaffWeeklyTest";
+import StaffStudentProgress from "@/pages/staff/StaffStudentProgress";
 import HodDashboard from "@/pages/hod/HodDashboard";
 import HodStaffManagement from "@/pages/hod/HodStaffManagement";
 import HodAttendance from "@/pages/hod/HodAttendance";
@@ -25,6 +29,7 @@ import HodAnalytics from "@/pages/hod/HodAnalytics";
 import HodProfile from "@/pages/hod/HodProfile";
 import HodDepartments from "@/pages/hod/HodDepartments";
 import HodAcademicProgress from "@/pages/hod/HodAcademicProgress";
+import HodStudentProgress from "@/pages/hod/HodStudentProgress";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,9 +44,11 @@ const App = () => (
           <CollegeProvider>
             <StaffProvider>
             <TodoProvider>
+            <StudentProvider>
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/student" element={<StudentPage />} />
 
               {/* Staff Routes */}
               <Route path="/staff" element={<ProtectedRoute allowedRoles={["ROLE_STAFF", "ROLE_ASST_PROF"]}><StaffDashboard /></ProtectedRoute>} />
@@ -51,6 +58,8 @@ const App = () => (
               <Route path="/staff/insights" element={<ProtectedRoute allowedRoles={["ROLE_STAFF", "ROLE_ASST_PROF"]}><StaffInsights /></ProtectedRoute>} />
               <Route path="/staff/profile" element={<ProtectedRoute allowedRoles={["ROLE_STAFF", "ROLE_ASST_PROF"]}><StaffProfile /></ProtectedRoute>} />
               <Route path="/staff/academic" element={<ProtectedRoute allowedRoles={["ROLE_STAFF", "ROLE_ASST_PROF"]}><StaffAcademicProgress /></ProtectedRoute>} />
+              <Route path="/staff/weekly-test" element={<ProtectedRoute allowedRoles={["ROLE_STAFF", "ROLE_ASST_PROF"]}><StaffWeeklyTest /></ProtectedRoute>} />
+              <Route path="/staff/student-progress" element={<ProtectedRoute allowedRoles={["ROLE_STAFF", "ROLE_ASST_PROF"]}><StaffStudentProgress /></ProtectedRoute>} />
 
               {/* HOD Routes */}
               <Route path="/hod" element={<ProtectedRoute allowedRoles={["ROLE_HOD"]}><HodDashboard /></ProtectedRoute>} />
@@ -62,9 +71,11 @@ const App = () => (
               <Route path="/hod/profile" element={<ProtectedRoute allowedRoles={["ROLE_HOD"]}><HodProfile /></ProtectedRoute>} />
               <Route path="/hod/departments" element={<ProtectedRoute allowedRoles={["ROLE_HOD"]}><HodDepartments /></ProtectedRoute>} />
               <Route path="/hod/academic" element={<ProtectedRoute allowedRoles={["ROLE_HOD"]}><HodAcademicProgress /></ProtectedRoute>} />
+              <Route path="/hod/student-progress" element={<ProtectedRoute allowedRoles={["ROLE_HOD"]}><HodStudentProgress /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </StudentProvider>
             </TodoProvider>
             </StaffProvider>
           </CollegeProvider>

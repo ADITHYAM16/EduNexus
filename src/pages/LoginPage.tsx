@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useStudent } from "@/contexts/StudentContext";
 import { supabase } from "@/lib/supabase";
-import { Eye, EyeOff, UserPlus, LogIn, ShieldCheck, Info, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, UserPlus, LogIn, ShieldCheck, Info, ArrowLeft, GraduationCap } from "lucide-react";
 
-type Tab = "login" | "signup" | "admin";
+type Tab = "login" | "signup" | "admin" | "student";
 type View = "main" | "forgot-email" | "forgot-reset";
 
 const inputCls = "w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/40 focus:border-purple-400 transition";
@@ -38,9 +39,10 @@ const PwdInput: React.FC<{ value: string; onChange: (v: string) => void; placeho
 
 const LoginPage: React.FC = () => {
   const { login, signup, resetPassword } = useAuth();
+  const { setStudent } = useStudent();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState<Tab>("login");
+  const [tab, setTab] = useState<Tab>("signup");
   const [view, setView] = useState<View>("main");
 
   // ── Sign In state
@@ -68,6 +70,15 @@ const LoginPage: React.FC = () => {
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
 
+  // ── Student Login state
+  const [studentRoll, setStudentRoll] = useState("");
+  const [studentError, setStudentError] = useState("");
+  const [studentLoading, setStudentLoading] = useState(false);
+
+  const DEPARTMENTS = ["Computer Science", "Artificial Intelligence & Data Science", "Information Technology", "Electronics & Communication", "Mechanical Engineering", "Civil Engineering"];
+  const SECTIONS = ["A", "B", "C"];
+  const YEARS = ["I Year", "II Year", "III Year", "IV Year"];
+
   // ── Forgot Password state
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotEmailError, setForgotEmailError] = useState("");
@@ -82,7 +93,7 @@ const LoginPage: React.FC = () => {
 
   const switchTab = (t: Tab) => {
     setTab(t); setView("main");
-    setLoginError(""); setSignupError(""); setSignupSuccess(""); setAdminError("");
+    setLoginError(""); setSignupError(""); setSignupSuccess(""); setAdminError(""); setStudentError("");
   };
 
   // ── Handlers
@@ -103,6 +114,25 @@ const LoginPage: React.FC = () => {
       setLoginError(result.error || "Login failed.");
     }
     setLoginLoading(false);
+  };
+
+  const handleStudentLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStudentError("");
+    if (!studentRoll.trim()) { setStudentError("Please enter your roll number."); return; }
+    setStudentLoading(true);
+    const { data, error: dbErr } = await supabase
+      .from("students")
+      .select("*")
+      .eq("roll_no", studentRoll.trim().toUpperCase())
+      .single();
+    setStudentLoading(false);
+    if (dbErr || !data) {
+      setStudentError("❌ Roll number not registered. Please contact your administrator.");
+      return;
+    }
+    setStudent({ name: data.name, rollNo: data.roll_no, email: data.email || "", department: data.department, section: data.section, year: data.year });
+    navigate("/student");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -295,23 +325,27 @@ const LoginPage: React.FC = () => {
             {/* Header */}
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-foreground">
-                {tab === "login" ? "Welcome back" : tab === "signup" ? "Create account" : "Admin Login"}
+                {tab === "login" ? "Welcome back" : tab === "signup" ? "Create account" : tab === "admin" ? "Admin Login" : "Student Login"}
               </h2>
             </div>
 
-            {/* 3-Tab Toggle */}
+            {/* 4-Tab Toggle: Sign Up | Sign In | Admin | Student */}
             <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl">
-              <button onClick={() => switchTab("login")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-medium transition-all ${tab === "login" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <LogIn className="w-3.5 h-3.5" /> Sign In
-              </button>
               <button onClick={() => switchTab("signup")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-medium transition-all ${tab === "signup" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <UserPlus className="w-3.5 h-3.5" /> Sign Up
+                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "signup" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                <UserPlus className="w-3 h-3" /> Sign Up
+              </button>
+              <button onClick={() => switchTab("login")}
+                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "login" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                <LogIn className="w-3 h-3" /> Sign In
               </button>
               <button onClick={() => switchTab("admin")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-medium transition-all ${tab === "admin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <ShieldCheck className="w-3.5 h-3.5" /> Admin
+                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "admin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                <ShieldCheck className="w-3 h-3" /> Admin
+              </button>
+              <button onClick={() => switchTab("student")}
+                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "student" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                <GraduationCap className="w-3 h-3" /> Student
               </button>
             </div>
 
@@ -399,6 +433,28 @@ const LoginPage: React.FC = () => {
                     Forgot password?
                   </button>
                 </div>
+              </form>
+            )}
+
+            {/* ── STUDENT LOGIN ── */}
+            {tab === "student" && (
+              <form onSubmit={handleStudentLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-1.5">Roll Number *</label>
+                  <input
+                    type="text"
+                    value={studentRoll}
+                    onChange={e => setStudentRoll(e.target.value)}
+                    required
+                    placeholder="e.g. 124UAD003"
+                    className={inputCls}
+                    autoFocus
+                  />
+                </div>
+                {studentError && <ErrBox msg={studentError} />}
+                <button type="submit" disabled={studentLoading} className={btnCls} style={gradientStyle}>
+                  {studentLoading ? "Verifying..." : "Enter Student Portal"}
+                </button>
               </form>
             )}
 

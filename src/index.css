@@ -121,8 +121,10 @@
     color: #111827 !important;
     @apply font-sans antialiased scale-100;
     font-family: 'Inter', system-ui, sans-serif;
-    overflow: hidden;
     height: 100%;
+  }
+  body {
+    overflow-x: hidden;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-semibold text-[#111827] !important;

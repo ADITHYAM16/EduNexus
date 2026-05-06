@@ -116,19 +116,42 @@ const StaffAttendance: React.FC = () => {
 
     const records = data || [];
     setHistory(records);
-    const total = records.length;
+
+    // Overall percentage: present days / total working days elapsed this year
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+    let workingDaysElapsed = 0;
+    for (let d = new Date(yearStart); d <= now; d.setDate(d.getDate() + 1)) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) workingDaysElapsed++;
+    }
     const present = records.filter(r => r.status === "present").length;
-    const late = records.filter(r => r.status === "late").length;
-    setPercentage(total > 0 ? Math.round(((present + late * 0.5) / total) * 100) : 0);
+    const late    = records.filter(r => r.status === "late").length;
+    setPercentage(workingDaysElapsed > 0 ? Math.round(((present + late * 0.5) / workingDaysElapsed) * 100) : 0);
+
     if (records.find(r => r.date === today)) setMarked(true);
 
+    // Chart: each month value = present days / working days in that month (up to today)
     const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     setChartData(months.map((label, i) => {
-      const mr = records.filter(r => new Date(r.date).getMonth() === i);
-      const t = mr.length;
-      const p = mr.filter(r => r.status === "present").length;
-      const l = mr.filter(r => r.status === "late").length;
-      return { label, value: t > 0 ? Math.round(((p + l * 0.5) / t) * 100) : 0 };
+      const year = now.getFullYear();
+      // Don't show future months
+      if (i > now.getMonth()) return { label, value: 0 };
+
+      // Count working days in this month up to today
+      const monthEnd = i === now.getMonth()
+        ? now
+        : new Date(year, i + 1, 0); // last day of month
+      let workingDays = 0;
+      for (let d = new Date(year, i, 1); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+        const day = d.getDay();
+        if (day !== 0 && day !== 6) workingDays++;
+      }
+
+      const mr = records.filter(r => new Date(r.date).getMonth() === i && new Date(r.date).getFullYear() === year);
+      const p  = mr.filter(r => r.status === "present").length;
+      const l  = mr.filter(r => r.status === "late").length;
+      return { label, value: workingDays > 0 ? Math.round(((p + l * 0.5) / workingDays) * 100) : 0 };
     }));
   }, [user?.id, today]);
 

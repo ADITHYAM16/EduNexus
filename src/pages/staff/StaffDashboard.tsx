@@ -4,8 +4,9 @@ import StatCard from "@/components/StatCard";
 import InsightCard from "@/components/InsightCard";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import { CalendarCheck, BookOpen, Brain, MessageSquare, Loader2 } from "lucide-react";
+import { CalendarCheck, BookOpen, Brain, MessageSquare, Loader2, GraduationCap } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { TestResult } from "@/contexts/StudentContext";
 
 interface Message { id: string; subject: string; body: string; created_at: string; }
 
@@ -20,6 +21,12 @@ const StaffDashboard: React.FC = () => {
   const [chartData, setChartData] = useState<{ week: string; percentage: number }[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  // Student test results visible to staff
+  const studentResults: TestResult[] = (() => {
+    try { return JSON.parse(localStorage.getItem("student_test_results") || "[]"); } catch { return []; }
+  })();
+  const sectionResults = studentResults.filter(r => r.department === user?.department);
 
   const fetchData = useCallback(async () => {
     if (!user?.id) return;
@@ -170,6 +177,45 @@ const StaffDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Student MCQ Test Scores */}
+      {sectionResults.length > 0 && (
+        <div className="mt-6 bg-card border border-border rounded-xl p-5 shadow-card">
+          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <GraduationCap className="w-4 h-4" /> Student MCQ Scores — {user?.department}
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Student</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Roll No</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Section</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Subject</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Score</th>
+                  <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...sectionResults].reverse().slice(0, 20).map((r, i) => (
+                  <tr key={i} className="border-b border-border/50 last:border-0">
+                    <td className="py-2 px-3 font-medium text-foreground">{r.studentName}</td>
+                    <td className="py-2 px-3 text-muted-foreground">{r.rollNo}</td>
+                    <td className="py-2 px-3 text-muted-foreground">{r.section} — {r.year}</td>
+                    <td className="py-2 px-3 text-foreground">{r.subject}</td>
+                    <td className="py-2 px-3">
+                      <span className={`font-semibold ${
+                        r.score / r.total >= 0.7 ? "text-green-600" : r.score / r.total >= 0.5 ? "text-orange-500" : "text-red-500"
+                      }`}>{r.score}/{r.total}</span>
+                    </td>
+                    <td className="py-2 px-3 text-muted-foreground">{new Date(r.date).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

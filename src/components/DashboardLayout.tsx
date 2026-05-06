@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard, CalendarCheck, BookOpen, MessageSquare, Brain,
-  Users, BarChart3, LogOut, Menu, Moon, Sun, Building2
+  Users, BarChart3, LogOut, Menu, Moon, Sun, Building2, ClipboardList, TrendingUp
 } from "lucide-react";
 import EduNexusLogo from "@/components/EduNexusLogo";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -13,6 +13,8 @@ const staffLinks = [
   { to: "/staff/attendance", label: "Attendance", icon: CalendarCheck },
   { to: "/staff/messages", label: "Messages", icon: MessageSquare },
   { to: "/staff/academic", label: "Syllabus Progress", icon: BookOpen },
+  { to: "/staff/student-progress", label: "Students Progress", icon: TrendingUp },
+  { to: "/staff/weekly-test", label: "Weekly Test", icon: ClipboardList },
   { to: "/staff/insights", label: "AI Insights", icon: Brain },
 ];
 
@@ -22,6 +24,7 @@ const hodLinks = [
   { to: "/hod/staff", label: "Staff Management", icon: Users },
   { to: "/hod/attendance", label: "Attendance Monitor", icon: CalendarCheck },
   { to: "/hod/progress", label: "Syllabus Progress", icon: BookOpen },
+  { to: "/hod/student-progress", label: "Students Progress", icon: TrendingUp },
   { to: "/hod/communication", label: "Communication", icon: MessageSquare },
   { to: "/hod/analytics", label: "Analytics & AI", icon: BarChart3 },
 ];
@@ -126,9 +129,9 @@ const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) 
       </Sheet>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div className="flex-1 flex flex-col overflow-y-auto min-w-0">
         {/* Header — always visible */}
-        <header className="flex items-center justify-between px-4 py-3 border rounded-xl mx-2 my-2 bg-card shrink-0 overflow-hidden border-purple-500 dark:border-blue-500">
+        <header className="flex items-center justify-between px-4 py-3 border-2 rounded-xl mx-2 my-2 bg-card shrink-0 border-purple-500 dark:border-purple-400">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Hamburger — only on mobile */}
             <button

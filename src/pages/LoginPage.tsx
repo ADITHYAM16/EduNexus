@@ -11,7 +11,7 @@ type View = "main" | "forgot-email" | "forgot-reset";
 const inputCls = "w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-400/40 focus:border-purple-400 transition";
 const btnCls = "w-full py-2.5 px-4 rounded-lg text-white text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-60";
 const gradientStyle = { background: "linear-gradient(135deg, #a855f7, #7c3aed)" };
-const adminGradient = { background: "linear-gradient(135deg, #1e40af, #1d4ed8)" };
+const adminGradient = { background: "linear-gradient(135deg, #1e40af, #1d4ed8)" } as React.CSSProperties;
 
 const ErrBox: React.FC<{ msg: string }> = ({ msg }) => (
   <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
@@ -344,7 +344,7 @@ const LoginPage: React.FC = () => {
               </button>
               <button onClick={() => switchTab("login")}
                 className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "login" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <LogIn className="w-3 h-3" /> Sign In
+                <LogIn className="w-3 h-3" /> Staff
               </button>
               <button onClick={() => switchTab("admin")}
                 className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "admin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>

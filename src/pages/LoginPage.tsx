@@ -5,6 +5,54 @@ import { useStudent } from "@/contexts/StudentContext";
 import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff, UserPlus, LogIn, ShieldCheck, Info, ArrowLeft, GraduationCap } from "lucide-react";
 
+// Splash Screen
+const SplashScreen: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setFadeOut(true), 2000);
+    const t2 = setTimeout(() => onDone(), 2700);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onDone]);
+
+  return (
+    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-white transition-opacity duration-700 ${fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+      <div className="relative flex items-center justify-center w-64 h-64">
+        {[0, 1, 2, 3].map(i => (
+          <span
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: `${76 + i * 30}px`,
+              height: `${76 + i * 30}px`,
+              border: `2px solid rgba(168,85,247,${0.6 - i * 0.12})`,
+              animation: `ping ${1.1 + i * 0.28}s cubic-bezier(0,0,0.2,1) infinite`,
+              animationDelay: `${i * 0.2}s`,
+            }}
+          />
+        ))}
+        <span
+          className="absolute w-52 h-52 rounded-full"
+          style={{
+            border: "3px solid transparent",
+            borderTopColor: "#a855f7",
+            borderRightColor: "#7c3aed",
+            animation: "spin 0.9s linear infinite",
+          }}
+        />
+        <img
+          src="/logo.png"
+          alt="EduNexus"
+          className="relative z-10 w-32 h-32 object-contain"
+          style={{ mixBlendMode: "multiply", animation: "pulse 1.5s ease-in-out infinite" }}
+        />
+      </div>
+      <h1 className="mt-7 text-3xl font-bold font-cinzel text-purple-700 tracking-wide">EduNexus</h1>
+      <p className="mt-1 text-xs text-purple-400 font-semibold tracking-widest uppercase">Loading...</p>
+    </div>
+  );
+};
+
 type Tab = "login" | "signup" | "admin" | "student";
 type View = "main" | "forgot-email" | "forgot-reset";
 
@@ -41,8 +89,8 @@ const LoginPage: React.FC = () => {
   const { login, signup, resetPassword } = useAuth();
   const { setStudent } = useStudent();
   const navigate = useNavigate();
+  const [showSplash, setShowSplash] = useState(true);
 
-  // Force light mode on login page
   useEffect(() => {
     const prev = document.documentElement.classList.contains("dark");
     document.documentElement.classList.remove("dark");
@@ -52,14 +100,12 @@ const LoginPage: React.FC = () => {
   const [tab, setTab] = useState<Tab>("signup");
   const [view, setView] = useState<View>("main");
 
-  // ── Sign In state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPwd, setLoginPwd] = useState("");
   const [showLoginPwd, setShowLoginPwd] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // ── Sign Up state
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPwd, setSignupPwd] = useState("");
@@ -70,23 +116,16 @@ const LoginPage: React.FC = () => {
   const [signupSuccess, setSignupSuccess] = useState("");
   const [signupLoading, setSignupLoading] = useState(false);
 
-  // ── Admin Login state
   const [adminEmail, setAdminEmail] = useState("");
   const [adminPwd, setAdminPwd] = useState("");
   const [showAdminPwd, setShowAdminPwd] = useState(false);
   const [adminError, setAdminError] = useState("");
   const [adminLoading, setAdminLoading] = useState(false);
 
-  // ── Student Login state
   const [studentRoll, setStudentRoll] = useState("");
   const [studentError, setStudentError] = useState("");
   const [studentLoading, setStudentLoading] = useState(false);
 
-  const DEPARTMENTS = ["Computer Science", "Artificial Intelligence & Data Science", "Information Technology", "Electronics & Communication", "Mechanical Engineering", "Civil Engineering"];
-  const SECTIONS = ["A", "B", "C"];
-  const YEARS = ["I Year", "II Year", "III Year", "IV Year"];
-
-  // ── Forgot Password state
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotEmailError, setForgotEmailError] = useState("");
   const [forgotEmailLoading, setForgotEmailLoading] = useState(false);
@@ -103,7 +142,6 @@ const LoginPage: React.FC = () => {
     setLoginError(""); setSignupError(""); setSignupSuccess(""); setAdminError(""); setStudentError("");
   };
 
-  // ── Handlers
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError(""); setLoginLoading(true);
@@ -111,11 +149,7 @@ const LoginPage: React.FC = () => {
     if (result.success) {
       const saved = sessionStorage.getItem("portal_user");
       const u = saved ? JSON.parse(saved) : null;
-      if (u?.role === "ROLE_HOD") {
-        setLoginError("Use Admin Login to access the HOD panel.");
-        setLoginLoading(false);
-        return;
-      }
+      if (u?.role === "ROLE_HOD") { setLoginError("Use Admin Login to access the HOD panel."); setLoginLoading(false); return; }
       navigate("/staff");
     } else {
       setLoginError(result.error || "Login failed.");
@@ -128,16 +162,9 @@ const LoginPage: React.FC = () => {
     setStudentError("");
     if (!studentRoll.trim()) { setStudentError("Please enter your roll number."); return; }
     setStudentLoading(true);
-    const { data, error: dbErr } = await supabase
-      .from("students")
-      .select("*")
-      .eq("roll_no", studentRoll.trim().toUpperCase())
-      .single();
+    const { data, error: dbErr } = await supabase.from("students").select("*").eq("roll_no", studentRoll.trim().toUpperCase()).single();
     setStudentLoading(false);
-    if (dbErr || !data) {
-      setStudentError("❌ Roll number not registered. Please contact your administrator.");
-      return;
-    }
+    if (dbErr || !data) { setStudentError("Roll number not registered. Please contact your administrator."); return; }
     setStudent({ name: data.name, rollNo: data.roll_no, email: data.email || "", department: data.department, section: data.section, year: data.year });
     navigate("/student");
   };
@@ -145,10 +172,7 @@ const LoginPage: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignupError(""); setSignupSuccess("");
-    if (signupEmail.trim().toLowerCase() === "hod@edunexus.com") {
-      setSignupError("Admin account cannot be registered here. Use Admin Login.");
-      return;
-    }
+    if (signupEmail.trim().toLowerCase() === "hod@edunexus.com") { setSignupError("Admin account cannot be registered here. Use Admin Login."); return; }
     if (signupPwd !== signupConfirm) { setSignupError("Passwords do not match."); return; }
     setSignupLoading(true);
     const result = await signup(signupName, signupEmail, signupPwd);
@@ -169,11 +193,7 @@ const LoginPage: React.FC = () => {
     if (result.success) {
       const saved = sessionStorage.getItem("portal_user");
       const u = saved ? JSON.parse(saved) : null;
-      if (u?.role !== "ROLE_HOD") {
-        setAdminError("This account does not have admin access.");
-        setAdminLoading(false);
-        return;
-      }
+      if (u?.role !== "ROLE_HOD") { setAdminError("This account does not have admin access."); setAdminLoading(false); return; }
       navigate("/hod");
     } else {
       setAdminError(result.error || "Admin login failed.");
@@ -186,11 +206,7 @@ const LoginPage: React.FC = () => {
     setForgotEmailError(""); setForgotEmailLoading(true);
     const email = forgotEmail.trim().toLowerCase();
     const { data } = await supabase.from("staff").select("id").eq("email", email).single();
-    if (!data) {
-      setForgotEmailError("No account found with this email.");
-      setForgotEmailLoading(false);
-      return;
-    }
+    if (!data) { setForgotEmailError("No account found with this email."); setForgotEmailLoading(false); return; }
     setForgotEmailLoading(false);
     setView("forgot-reset");
   };
@@ -203,11 +219,8 @@ const LoginPage: React.FC = () => {
     setResetLoading(true);
     const result = await resetPassword(forgotEmail.trim().toLowerCase(), resetPwd);
     if (result.success) {
-      setResetSuccess("Password reset successfully! Redirecting to sign in…");
-      setTimeout(() => {
-        setView("main"); setTab("login");
-        setForgotEmail(""); setResetPwd(""); setResetConfirm(""); setResetSuccess("");
-      }, 1800);
+      setResetSuccess("Password reset successfully! Redirecting to sign in...");
+      setTimeout(() => { setView("main"); setTab("login"); setForgotEmail(""); setResetPwd(""); setResetConfirm(""); setResetSuccess(""); }, 1800);
     } else {
       setResetError(result.error || "Reset failed.");
     }
@@ -235,240 +248,214 @@ const LoginPage: React.FC = () => {
     </div>
   );
 
-  // ── Forgot Password: Email step
+  const mobileHeader = (
+    <div className="flex flex-col items-center pt-0 pb-2 lg:hidden w-full">
+      <img src="/logo.png" alt="EduNexus" className="w-44 h-44 object-contain" style={{ mixBlendMode: "multiply" }} />
+      <h1 className="text-4xl font-bold text-foreground -mt-6 font-cinzel">EduNexus</h1>
+    </div>
+  );
+
   if (view === "forgot-email") {
     return (
-      <div className="min-h-screen flex">
-        {leftPanel}
-        <div className="flex-1 flex flex-col items-center bg-background min-h-screen">
-          <div className="flex flex-col items-center pt-0 pb-2 lg:hidden w-full">
-            <img src="/logo.png" alt="EduNexus" className="w-44 h-44 object-contain" style={{ mixBlendMode: "multiply" }} />
-            <h1 className="text-4xl font-bold text-foreground -mt-6 font-cinzel">EduNexus</h1>
-          </div>
-          <div className="w-full max-w-md flex-1 flex flex-col justify-center px-6 pb-6">
-            <div className="bg-card border border-border rounded-2xl shadow-card p-8">
-              <button onClick={() => setView("main")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
-                <ArrowLeft className="w-4 h-4" /> Back to Sign In
-              </button>
-              <h2 className="text-2xl font-bold text-foreground mb-1">Forgot Password</h2>
-              <p className="text-muted-foreground text-sm mb-6">Enter your registered email to reset your password.</p>
-              <form onSubmit={handleForgotEmailSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
-                  <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required
-                    placeholder="yourname@mahendra.info" className={inputCls} />
-                </div>
-                {forgotEmailError && <ErrBox msg={forgotEmailError} />}
-                <button type="submit" disabled={forgotEmailLoading} className={btnCls} style={gradientStyle}>
-                  {forgotEmailLoading ? "Verifying…" : "Continue"}
+      <>
+        {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+        <div className={`min-h-screen flex transition-opacity duration-500 ${showSplash ? "opacity-0" : "opacity-100"}`}>
+          {leftPanel}
+          <div className="flex-1 flex flex-col items-center bg-background min-h-screen">
+            {mobileHeader}
+            <div className="w-full max-w-md flex-1 flex flex-col justify-center px-6 pb-6">
+              <div className="bg-card border border-border rounded-2xl shadow-card p-8">
+                <button onClick={() => setView("main")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
+                  <ArrowLeft className="w-4 h-4" /> Back to Sign In
                 </button>
-              </form>
+                <h2 className="text-2xl font-bold text-foreground mb-1">Forgot Password</h2>
+                <p className="text-muted-foreground text-sm mb-6">Enter your registered email to reset your password.</p>
+                <form onSubmit={handleForgotEmailSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
+                    <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} required placeholder="yourname@mahendra.info" className={inputCls} />
+                  </div>
+                  {forgotEmailError && <ErrBox msg={forgotEmailError} />}
+                  <button type="submit" disabled={forgotEmailLoading} className={btnCls} style={gradientStyle}>
+                    {forgotEmailLoading ? "Verifying..." : "Continue"}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  // ── Forgot Password: Reset step
   if (view === "forgot-reset") {
     return (
-      <div className="min-h-screen flex">
-        {leftPanel}
-        <div className="flex-1 flex flex-col items-center bg-background min-h-screen">
-          <div className="flex flex-col items-center pt-0 pb-2 lg:hidden w-full">
-            <img src="/logo.png" alt="EduNexus" className="w-44 h-44 object-contain" style={{ mixBlendMode: "multiply" }} />
-            <h1 className="text-4xl font-bold text-foreground -mt-6 font-cinzel">EduNexus</h1>
-          </div>
-          <div className="w-full max-w-md flex-1 flex flex-col justify-center px-6 pb-6">
-            <div className="bg-card border border-border rounded-2xl shadow-card p-8">
-              <button onClick={() => setView("forgot-email")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
-                <ArrowLeft className="w-4 h-4" /> Back
-              </button>
-              <h2 className="text-2xl font-bold text-foreground mb-1">Set New Password</h2>
-              <p className="text-muted-foreground text-sm mb-6">
-                Setting new password for <span className="font-medium text-foreground">{forgotEmail}</span>
-              </p>
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">New Password</label>
-                  <PwdInput value={resetPwd} onChange={setResetPwd} placeholder="Min. 6 characters" show={showResetPwd} onToggle={() => setShowResetPwd(p => !p)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Confirm New Password</label>
-                  <PwdInput value={resetConfirm} onChange={setResetConfirm} placeholder="Re-enter new password" show={showResetConfirm} onToggle={() => setShowResetConfirm(p => !p)} />
-                </div>
-                {resetError && <ErrBox msg={resetError} />}
-                {resetSuccess && <OkBox msg={resetSuccess} />}
-                <button type="submit" disabled={resetLoading} className={btnCls} style={gradientStyle}>
-                  {resetLoading ? "Saving…" : "Reset Password"}
+      <>
+        {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+        <div className={`min-h-screen flex transition-opacity duration-500 ${showSplash ? "opacity-0" : "opacity-100"}`}>
+          {leftPanel}
+          <div className="flex-1 flex flex-col items-center bg-background min-h-screen">
+            {mobileHeader}
+            <div className="w-full max-w-md flex-1 flex flex-col justify-center px-6 pb-6">
+              <div className="bg-card border border-border rounded-2xl shadow-card p-8">
+                <button onClick={() => setView("forgot-email")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors">
+                  <ArrowLeft className="w-4 h-4" /> Back
                 </button>
-              </form>
+                <h2 className="text-2xl font-bold text-foreground mb-1">Set New Password</h2>
+                <p className="text-muted-foreground text-sm mb-6">
+                  Setting new password for <span className="font-medium text-foreground">{forgotEmail}</span>
+                </p>
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">New Password</label>
+                    <PwdInput value={resetPwd} onChange={setResetPwd} placeholder="Min. 6 characters" show={showResetPwd} onToggle={() => setShowResetPwd(p => !p)} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Confirm New Password</label>
+                    <PwdInput value={resetConfirm} onChange={setResetConfirm} placeholder="Re-enter new password" show={showResetConfirm} onToggle={() => setShowResetConfirm(p => !p)} />
+                  </div>
+                  {resetError && <ErrBox msg={resetError} />}
+                  {resetSuccess && <OkBox msg={resetSuccess} />}
+                  <button type="submit" disabled={resetLoading} className={btnCls} style={gradientStyle}>
+                    {resetLoading ? "Saving..." : "Reset Password"}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  // ── Main view
   return (
-    <div className="min-h-screen flex">
-      {leftPanel}
-
-      <div className="flex-1 flex flex-col items-center bg-background min-h-screen">
-        {/* Mobile header */}
-        <div className="flex flex-col items-center pt-0 pb-2 lg:hidden w-full">
-          <img src="/logo.png" alt="EduNexus" className="w-44 h-44 object-contain" style={{ mixBlendMode: "multiply" }} />
-          <h1 className="text-4xl font-bold text-foreground -mt-6 font-cinzel">EduNexus</h1>
-          <p className="text-xl font-medium mt-3 mb-0 text-center" style={{ color: "#a855f7" }}>
+    <>
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      <div className={`min-h-screen flex transition-opacity duration-500 ${showSplash ? "opacity-0" : "opacity-100"}`}>
+        {leftPanel}
+        <div className="flex-1 flex flex-col items-center bg-background min-h-screen">
+          {mobileHeader}
+          <p className="text-xl font-medium mt-0 mb-0 text-center lg:hidden" style={{ color: "#a855f7" }}>
             Department of Artificial Intelligence<br />&<br />Data Science
           </p>
-        </div>
+          <div className="w-full max-w-md flex-1 flex flex-col justify-center px-6 pb-6">
+            <div className="bg-card border border-border rounded-2xl shadow-card p-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground">
+                  {tab === "login" ? "Welcome back" : tab === "signup" ? "Create account" : tab === "admin" ? "Admin Login" : "Student Login"}
+                </h2>
+              </div>
 
-        <div className="w-full max-w-md flex-1 flex flex-col justify-center px-6 pb-6">
-          <div className="bg-card border border-border rounded-2xl shadow-card p-8">
-
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                {tab === "login" ? "Welcome back" : tab === "signup" ? "Create account" : tab === "admin" ? "Admin Login" : "Student Login"}
-              </h2>
-            </div>
-
-            {/* 4-Tab Toggle: Sign Up | Sign In | Admin | Student */}
-            <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl">
-              <button onClick={() => switchTab("signup")}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "signup" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <UserPlus className="w-3 h-3" /> Sign Up
-              </button>
-              <button onClick={() => switchTab("login")}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "login" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <LogIn className="w-3 h-3" /> Staff
-              </button>
-              <button onClick={() => switchTab("admin")}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "admin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <ShieldCheck className="w-3 h-3" /> Admin
-              </button>
-              <button onClick={() => switchTab("student")}
-                className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "student" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
-                <GraduationCap className="w-3 h-3" /> Student
-              </button>
-            </div>
-
-            {/* ── SIGN IN ── */}
-            {tab === "login" && (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
-                  <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required
-                    placeholder="yourname@mahendra.info" className={inputCls} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-                  <PwdInput value={loginPwd} onChange={setLoginPwd} placeholder="Enter your password" show={showLoginPwd} onToggle={() => setShowLoginPwd(p => !p)} />
-                </div>
-                {loginError && <ErrBox msg={loginError} />}
-                <button type="submit" disabled={loginLoading} className={btnCls} style={gradientStyle}>
-                  {loginLoading ? "Signing in…" : "Sign In"}
+              <div className="flex gap-1 mb-6 p-1 bg-muted rounded-xl">
+                <button onClick={() => switchTab("signup")} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "signup" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  <UserPlus className="w-3 h-3" /> Sign Up
                 </button>
-                <div className="flex items-center justify-between pt-1">
-                  <p className="text-xs text-muted-foreground">
-                    No account?{" "}
-                    <button type="button" onClick={() => switchTab("signup")} className="font-medium hover:underline" style={{ color: "#a855f7" }}>Sign up</button>
+                <button onClick={() => switchTab("login")} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "login" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  <LogIn className="w-3 h-3" /> Staff
+                </button>
+                <button onClick={() => switchTab("admin")} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "admin" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  <ShieldCheck className="w-3 h-3" /> Admin
+                </button>
+                <button onClick={() => switchTab("student")} className={`flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-xs font-medium transition-all ${tab === "student" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+                  <GraduationCap className="w-3 h-3" /> Student
+                </button>
+              </div>
+
+              {tab === "login" && (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
+                    <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required placeholder="yourname@mahendra.info" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
+                    <PwdInput value={loginPwd} onChange={setLoginPwd} placeholder="Enter your password" show={showLoginPwd} onToggle={() => setShowLoginPwd(p => !p)} />
+                  </div>
+                  {loginError && <ErrBox msg={loginError} />}
+                  <button type="submit" disabled={loginLoading} className={btnCls} style={gradientStyle}>
+                    {loginLoading ? "Signing in..." : "Sign In"}
+                  </button>
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-xs text-muted-foreground">
+                      No account?{" "}
+                      <button type="button" onClick={() => switchTab("signup")} className="font-medium hover:underline" style={{ color: "#a855f7" }}>Sign up</button>
+                    </p>
+                    <button type="button" onClick={() => { setForgotEmail(loginEmail); setForgotEmailError(""); setView("forgot-email"); }} className="text-xs font-medium hover:underline" style={{ color: "#a855f7" }}>
+                      Forgot password?
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {tab === "signup" && (
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Full Name</label>
+                    <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} required placeholder="Dr. / Prof. Your Name" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
+                    <input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required placeholder="yourname@mahendra.info" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
+                    <PwdInput value={signupPwd} onChange={setSignupPwd} placeholder="Min. 6 characters" show={showSignupPwd} onToggle={() => setShowSignupPwd(p => !p)} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Confirm Password</label>
+                    <PwdInput value={signupConfirm} onChange={setSignupConfirm} placeholder="Re-enter your password" show={showConfirmPwd} onToggle={() => setShowConfirmPwd(p => !p)} />
+                  </div>
+                  {signupError && <ErrBox msg={signupError} />}
+                  {signupSuccess && <OkBox msg={signupSuccess} />}
+                  <button type="submit" disabled={signupLoading} className={btnCls} style={gradientStyle}>
+                    {signupLoading ? "Creating account..." : "Create Account"}
+                  </button>
+                  <p className="text-center text-xs text-muted-foreground pt-1">
+                    Already have an account?{" "}
+                    <button type="button" onClick={() => switchTab("login")} className="font-medium hover:underline" style={{ color: "#a855f7" }}>Sign in</button>
                   </p>
-                  <button type="button" onClick={() => { setForgotEmail(loginEmail); setForgotEmailError(""); setView("forgot-email"); }}
-                    className="text-xs font-medium hover:underline" style={{ color: "#a855f7" }}>
-                    Forgot password?
+                </form>
+              )}
+
+              {tab === "admin" && (
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Admin Email</label>
+                    <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} required placeholder="yourname@mahendra.info" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
+                    <PwdInput value={adminPwd} onChange={setAdminPwd} placeholder="Enter admin password" show={showAdminPwd} onToggle={() => setShowAdminPwd(p => !p)} />
+                  </div>
+                  {adminError && <ErrBox msg={adminError} />}
+                  <button type="submit" disabled={adminLoading} className={btnCls} style={adminGradient}>
+                    {adminLoading ? "Signing in..." : "Admin Sign In"}
                   </button>
-                </div>
-              </form>
-            )}
+                  <div className="flex justify-end pt-1">
+                    <button type="button" onClick={() => { setForgotEmail("hod@edunexus.com"); setForgotEmailError(""); setView("forgot-email"); }} className="text-xs font-medium hover:underline" style={{ color: "#1d4ed8" }}>
+                      Forgot password?
+                    </button>
+                  </div>
+                </form>
+              )}
 
-            {/* ── SIGN UP ── */}
-            {tab === "signup" && (
-              <form onSubmit={handleSignup} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Full Name</label>
-                  <input type="text" value={signupName} onChange={e => setSignupName(e.target.value)} required
-                    placeholder="Dr. / Prof. Your Name" className={inputCls} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
-                  <input type="email" value={signupEmail} onChange={e => setSignupEmail(e.target.value)} required
-                    placeholder="yourname@mahendra.info" className={inputCls} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-                  <PwdInput value={signupPwd} onChange={setSignupPwd} placeholder="Min. 6 characters" show={showSignupPwd} onToggle={() => setShowSignupPwd(p => !p)} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Confirm Password</label>
-                  <PwdInput value={signupConfirm} onChange={setSignupConfirm} placeholder="Re-enter your password" show={showConfirmPwd} onToggle={() => setShowConfirmPwd(p => !p)} />
-                </div>
-                {signupError && <ErrBox msg={signupError} />}
-                {signupSuccess && <OkBox msg={signupSuccess} />}
-                <button type="submit" disabled={signupLoading} className={btnCls} style={gradientStyle}>
-                  {signupLoading ? "Creating account…" : "Create Account"}
-                </button>
-                <p className="text-center text-xs text-muted-foreground pt-1">
-                  Already have an account?{" "}
-                  <button type="button" onClick={() => switchTab("login")} className="font-medium hover:underline" style={{ color: "#a855f7" }}>Sign in</button>
-                </p>
-              </form>
-            )}
-
-            {/* ── ADMIN LOGIN ── */}
-            {tab === "admin" && (
-              <form onSubmit={handleAdminLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Admin Email</label>
-                  <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} required
-                    placeholder="yourname@mahendra.info" className={inputCls} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-                  <PwdInput value={adminPwd} onChange={setAdminPwd} placeholder="Enter admin password" show={showAdminPwd} onToggle={() => setShowAdminPwd(p => !p)} />
-                </div>
-                {adminError && <ErrBox msg={adminError} />}
-                <button type="submit" disabled={adminLoading} className={btnCls} style={adminGradient}>
-                  {adminLoading ? "Signing in…" : "Admin Sign In"}
-                </button>
-                <div className="flex justify-end pt-1">
-                  <button type="button" onClick={() => { setForgotEmail("hod@edunexus.com"); setForgotEmailError(""); setView("forgot-email"); }}
-                    className="text-xs font-medium hover:underline" style={{ color: "#1d4ed8" }}>
-                    Forgot password?
+              {tab === "student" && (
+                <form onSubmit={handleStudentLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">Roll Number</label>
+                    <input type="text" value={studentRoll} onChange={e => setStudentRoll(e.target.value)} required placeholder="e.g. 124UAD003" className={inputCls} autoFocus />
+                  </div>
+                  {studentError && <ErrBox msg={studentError} />}
+                  <button type="submit" disabled={studentLoading} className={btnCls} style={gradientStyle}>
+                    {studentLoading ? "Verifying..." : "Enter Student Portal"}
                   </button>
-                </div>
-              </form>
-            )}
-
-            {/* ── STUDENT LOGIN ── */}
-            {tab === "student" && (
-              <form onSubmit={handleStudentLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">Roll Number *</label>
-                  <input
-                    type="text"
-                    value={studentRoll}
-                    onChange={e => setStudentRoll(e.target.value)}
-                    required
-                    placeholder="e.g. 124UAD003"
-                    className={inputCls}
-                    autoFocus
-                  />
-                </div>
-                {studentError && <ErrBox msg={studentError} />}
-                <button type="submit" disabled={studentLoading} className={btnCls} style={gradientStyle}>
-                  {studentLoading ? "Verifying..." : "Enter Student Portal"}
-                </button>
-              </form>
-            )}
-
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
